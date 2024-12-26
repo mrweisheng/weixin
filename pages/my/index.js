@@ -2,22 +2,100 @@ Page({
   data: {
     userInfo: null,
     showNicknameInput: false,
+    showBioInput: false,
     tempUserInfo: {},
     tempNickname: '',
-    likesCount: 0,    // 添加点赞数量
-    collectCount: 0   // 添加收藏数量
+    tempBio: '',
+    likesCount: 0,
+    collectCount: 0,
+    dailyQuote: '',
+    quoteLoading: true
   },
 
   onLoad() {
-    const userInfo = wx.getStorageSync('userInfo');
-    console.log('页面加载，获取本地用户信息:', userInfo);
-    if (userInfo) {
-      this.setData({ 
-        userInfo,
-        // 设置点赞和收藏数量
-        likesCount: userInfo.likes?.length || 0,
-        collectCount: userInfo.collection?.length || 0
+    this.getDailyQuote();
+  },
+
+  // 点击登录按钮
+  async onLogin() {
+    try {
+      wx.showLoading({
+        title: '登录中...',
+        mask: true
       });
+
+      // 1. 获取微信登录凭证
+      const { code } = await wx.login();
+      console.log('获取微信登录凭证:', code);
+      
+      // 2. 调用后端接口检查用户状态
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: 'https://jiekou.hkstudy.asia/api/user/check-status',
+          method: 'POST',
+          data: { code },
+          success: resolve,
+          fail: reject
+        });
+      });
+      
+      console.log('检查用户状态返回:', res.data);
+      
+      if (res.data.code === 0) {
+        const { isNewUser, userInfo, token, tokenExpired } = res.data.data;
+        
+        if (isNewUser) {
+          // 新用户，需要授权信息
+          wx.showModal({
+            title: '欢迎使用',
+            content: '首次使用需要授权头像和昵称',
+            showCancel: false,
+            success: () => {
+              wx.chooseAvatar({
+                success: (res) => {
+                  this.onChooseAvatar(res);
+                }
+              });
+            }
+          });
+        } else {
+          // 老用户，直接登录
+          const formattedUserInfo = {
+            ...userInfo,
+            nickName: userInfo.nickname,
+            avatarUrl: userInfo.avatar
+          };
+          
+          // 保存登录信息
+          wx.setStorageSync('token', token);
+          wx.setStorageSync('tokenExpired', tokenExpired);
+          wx.setStorageSync('userInfo', formattedUserInfo);
+          
+          this.setData({
+            userInfo: formattedUserInfo,
+            likesCount: formattedUserInfo.likes?.length || 0,
+            collectCount: formattedUserInfo.collection?.length || 0
+          });
+          
+          wx.showToast({
+            title: '登录成功',
+            icon: 'success'
+          });
+          
+          // 获取最新用户信息
+          await this.getUserLatestInfo();
+        }
+      } else {
+        throw new Error(res.data.msg || '登录失败');
+      }
+    } catch (err) {
+      console.error('登录失败:', err);
+      wx.showToast({
+        title: err.message || '登录失败，请重试',
+        icon: 'none'
+      });
+    } finally {
+      wx.hideLoading();
     }
   },
 
@@ -35,107 +113,87 @@ Page({
     console.log('用户选择头像:', e.detail);
     const { avatarUrl } = e.detail;
     
-    // 直接使用微信返回的头像URL
     this.setData({
       'tempUserInfo.avatarUrl': avatarUrl,
       showNicknameInput: true,
       tempNickname: ''
     });
-    console.log('保存临时头像信息:', this.data.tempUserInfo);
   },
 
   async onConfirmNickname() {
     const nickName = this.data.tempNickname;
-    console.log('用户输入昵称:', nickName);
-    if (!nickName) {
-      console.warn('昵称为空，终止登录');
-      return;
-    }
+    if (!nickName) return;
 
     try {
-      console.log('开始登录流程...');
+      wx.showLoading({
+        title: '正在注册...',
+        mask: true
+      });
+
       // 1. 获取微信登录凭证
-      const loginResult = await wx.login();
-      console.log('获取微信登录凭证:', loginResult);
+      const { code } = await wx.login();
       
       // 2. 构建用户信息
       const userInfo = {
-        nickName: nickName,
+        nickName,
         avatarUrl: this.data.tempUserInfo.avatarUrl,
         gender: 0
       };
-      console.log('构建用户信息:', userInfo);
 
       // 3. 调用登录接口
-      console.log('准备调用登录接口...');
-      try {
-        const res = await new Promise((resolve, reject) => {
-          wx.request({
-            url: 'https://jiekou.hkstudy.asia/api/user/wx-login',
-            method: 'POST',
-            data: {
-              code: loginResult.code,
-              userInfo
-            },
-            success: (res) => {
-              console.log('接口调用成功，原始响应:', res);
-              resolve(res);
-            },
-            fail: (error) => {
-              console.error('接口调用失败:', error);
-              reject(error);
-            }
-          });
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: 'https://jiekou.hkstudy.asia/api/user/wx-login',
+          method: 'POST',
+          data: {
+            code,
+            userInfo
+          },
+          success: resolve,
+          fail: reject
+        });
+      });
+
+      console.log('登录接口响应:', res.data);
+
+      if (res.data.code === 0) {
+        const { token, tokenExpired, userInfo: returnedUserInfo } = res.data.data;
+        
+        // 转换字段名以匹配页面使用
+        const formattedUserInfo = {
+          ...returnedUserInfo,
+          nickName: returnedUserInfo.nickname,
+          avatarUrl: returnedUserInfo.avatar
+        };
+        
+        wx.setStorageSync('token', token);
+        wx.setStorageSync('tokenExpired', tokenExpired);
+        wx.setStorageSync('userInfo', formattedUserInfo);
+        
+        this.setData({
+          userInfo: formattedUserInfo,
+          showNicknameInput: false,
+          tempUserInfo: {},
+          tempNickname: ''
         });
 
-        console.log('登录接口响应:', res.data);
-
-        if (res.data.code === 0) {
-          // 保存登录信息
-          const loginData = res.data.data;
-          console.log('登录成功，保存信息:', loginData);
-          
-          // 转换字段名以匹配页面使用
-          const userInfo = {
-            ...loginData.userInfo,
-            nickName: loginData.userInfo.nickname,
-            avatarUrl: loginData.userInfo.avatar
-          };
-          
-          wx.setStorageSync('token', loginData.token);
-          wx.setStorageSync('tokenExpired', loginData.tokenExpired);
-          wx.setStorageSync('userInfo', userInfo);  // 保存转换后的用户信息
-          
-          this.setData({
-            userInfo,  // 使用转换后的用户信息
-            showNicknameInput: false,
-            tempUserInfo: {},
-            tempNickname: ''
-          });
-
-          wx.showToast({
-            title: '登录成功',
-            icon: 'success'
-          });
-
-          await this.getUserLatestInfo();  // 获取完整的用户信息
-        } else {
-          console.error('登录接口返回错误:', res.data);
-          throw new Error(res.data.msg || '登录失败');
-        }
-      } catch (err) {
-        console.error('登录过程出错:', err);
         wx.showToast({
-          title: err.errMsg || '登录失败，请重试',
-          icon: 'none'
+          title: '注册成功',
+          icon: 'success'
         });
+
+        await this.getUserLatestInfo();
+      } else {
+        throw new Error(res.data.msg || '注册失败');
       }
     } catch (err) {
-      console.error('登录过程出错:', err);
+      console.error('注册失败:', err);
       wx.showToast({
-        title: '登录失败，请重试',
+        title: err.message || '注册失败，请重试',
         icon: 'none'
       });
+    } finally {
+      wx.hideLoading();
     }
   },
 
@@ -232,7 +290,7 @@ Page({
       console.log('更新头像响应:', updateRes.data);
 
       if (updateRes.data.code === 0) {
-        // 更新本地存储和页面显示
+        // 更新本地存储��页面显示
         const newUserInfo = {
           ...this.data.userInfo,
           avatarUrl: updateRes.data.data.avatar,
@@ -406,10 +464,99 @@ Page({
     }
   },
 
+  // 获取每日一句
+  async getDailyQuote() {
+    try {
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: 'https://jiekou.hkstudy.asia/api/quote/daily',
+          method: 'POST',
+          success: resolve,
+          fail: reject
+        });
+      });
+
+      console.log('获取每日一句返回:', res.data);
+      if (res.data.code === 0) {
+        this.setData({
+          dailyQuote: res.data.data.content,
+          quoteLoading: false
+        });
+      }
+    } catch (err) {
+      console.error('获取每日一句失败:', err);
+      this.setData({ quoteLoading: false });
+    }
+  },
+
   onShow() {
     // 每次显示页面时获取最新信息
     if (this.data.userInfo) {
       this.getUserLatestInfo();
+      this.getDailyQuote();  // 每次显示页面时更新每日一句
+    }
+  },
+
+  // 点击修改个人简介
+  onUpdateBio() {
+    if (!this.data.userInfo) return;
+    this.setData({
+      tempBio: this.data.userInfo.bio || '',
+      showBioInput: true
+    });
+  },
+
+  // 确认修改个人简介
+  async onConfirmUpdateBio() {
+    const bio = this.data.tempBio;
+    try {
+      const token = wx.getStorageSync('token');
+      if (!token) {
+        throw new Error('未登录');
+      }
+
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: 'https://jiekou.hkstudy.asia/api/user/update',
+          method: 'POST',
+          header: {
+            'Authorization': `Bearer ${token}`
+          },
+          data: {
+            bio: bio
+          },
+          success: resolve,
+          fail: reject
+        });
+      });
+
+      if (res.data.code === 0) {
+        const newUserInfo = {
+          ...this.data.userInfo,
+          bio: res.data.data.bio
+        };
+        wx.setStorageSync('userInfo', newUserInfo);
+        this.setData({
+          userInfo: newUserInfo,
+          showBioInput: false,
+          tempBio: ''
+        });
+
+        wx.showToast({
+          title: '更新成功',
+          icon: 'success'
+        });
+
+        await this.getUserLatestInfo();
+      } else {
+        throw new Error(res.data.msg || '更新失败');
+      }
+    } catch (err) {
+      console.error('更新个人简介失败:', err);
+      wx.showToast({
+        title: err.message || '更新失败，请重试',
+        icon: 'none'
+      });
     }
   }
 }); 

@@ -2,6 +2,11 @@
   <!-- 顶部背景 -->
   <view class="header-bg"></view>
 
+  <!-- 波浪装饰 -->
+  <view class="wave-decoration">
+    <view class="ink-dots"></view>
+  </view>
+
   <!-- 用户信息卡片 -->
   <view class="user-card">
     <view class="user-info">
@@ -15,19 +20,34 @@
           <text class="name" bindtap="onUpdateNickname">
             {{userInfo.nickName || userInfo.nickname}}
           </text>
-          <text class="join-time">加入时间：2024-01</text>
+          <text class="bio" bindtap="onUpdateBio">
+            {{userInfo.bio || '这个家伙很懒，什么都没留下~'}}
+          </text>
         </view>
       </block>
       <block wx:else>
-        <image class="avatar" src="/assets/images/default-avatar.png" />
-        <view class="info-content">
+        <view class="login-section">
+          <image class="default-avatar" src="/assets/images/default-avatar.png" />
           <button 
             class="login-btn"
-            open-type="chooseAvatar" 
-            bindchooseavatar="onChooseAvatar">
-            点击授权头像
+            bindtap="onLogin">
+            <text class="login-text">立即登录</text>
           </button>
-          <text class="login-desc">登录后可以体验更多功能</text>
+          <view class="login-desc">登录后可以体验更多功能</view>
+          <view class="login-features">
+            <view class="feature-item">
+              <text class="feature-icon">👍</text>
+              <text class="feature-text">点赞收藏</text>
+            </view>
+            <view class="feature-item">
+              <text class="feature-icon">📱</text>
+              <text class="feature-text">同步数据</text>
+            </view>
+            <view class="feature-item">
+              <text class="feature-icon">🌟</text>
+              <text class="feature-text">更多功能</text>
+            </view>
+          </view>
         </view>
       </block>
     </view>
@@ -70,13 +90,30 @@
     </view>
   </view>
 
-  <!-- 底部信息 -->
-  <view class="footer-info">
-    <view class="footer-decoration">
-      <view class="ink-dot"></view>
+  <!-- 每日一句 -->
+  <view class="daily-quote" wx:if="{{!quoteLoading && dailyQuote}}">
+    <!-- 装饰边框 -->
+    <view class="quote-border">
+      <view class="corner top-left"></view>
+      <view class="corner top-right"></view>
+      <view class="corner bottom-left"></view>
+      <view class="corner bottom-right"></view>
     </view>
-    <text class="version">浮图物相 v1.0.0</text>
-    <text class="copyright">Copyright © 2024</text>
+
+    <!-- 水墨装饰 -->
+    <view class="ink-decoration left"></view>
+    <view class="ink-decoration right"></view>
+
+    <view class="quote-content">
+      <view class="quote-header">
+        <view class="ink-line left"></view>
+        <text class="quote-title">今日之言</text>
+        <view class="ink-line right"></view>
+      </view>
+      <text class="quote-mark">『</text>
+      <text class="quote-text">{{dailyQuote}}</text>
+      <text class="quote-mark">』</text>
+    </view>
   </view>
 </view>
 
@@ -97,6 +134,28 @@
       disabled="{{!tempNickname}}">
       确定
     </button>
+  </view>
+</view>
+
+<!-- 个人简介输入框 -->
+<view class="bio-modal" wx:if="{{showBioInput}}">
+  <view class="bio-content">
+    <text class="bio-title">编辑个人简介</text>
+    <textarea 
+      class="bio-input" 
+      placeholder="介绍一下自己吧~" 
+      model:value="{{tempBio}}"
+      maxlength="50"
+      focus="{{true}}"
+    />
+    <view class="bio-footer">
+      <text class="bio-count">{{tempBio.length}}/50</text>
+      <button 
+        class="confirm-btn" 
+        bindtap="onConfirmUpdateBio">
+        确定
+      </button>
+    </view>
   </view>
 </view>
 

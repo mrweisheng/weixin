@@ -10,18 +10,143 @@
   left: 0;
   right: 0;
   height: 240rpx;
-  background: linear-gradient(135deg, #8E9AAF 0%, #CBC0D3 100%);
+  background: linear-gradient(135deg, #B4A5A5 0%, #D3C5C5 100%);
   border-bottom-left-radius: 40rpx;
   border-bottom-right-radius: 40rpx;
+}
+
+/* 波浪装饰 */
+.wave-decoration {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 600rpx;
+  bottom: 0;
+  z-index: 1;
+  overflow: hidden;
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.wave-decoration::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 70%;
+  background: 
+    radial-gradient(ellipse at 20% 100%, #2c2c2c 0%, transparent 70%) no-repeat 0 100% / 60% 70%,
+    radial-gradient(ellipse at 60% 100%, #2c2c2c 0%, transparent 70%) no-repeat 30% 100% / 70% 60%,
+    radial-gradient(ellipse at 100% 100%, #2c2c2c 0%, transparent 70%) no-repeat 70% 100% / 60% 50%;
+  filter: blur(40rpx);
+  opacity: 0.1;
+  transform-origin: bottom;
+  animation: mountainFloat 20s ease-in-out infinite;
+}
+
+.wave-decoration::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 50%;
+  background:
+    linear-gradient(90deg, transparent 49%, #2c2c2c 49.5%, #2c2c2c 50.5%, transparent 51%) no-repeat 5% 0 / 15rpx 80%,
+    linear-gradient(90deg, transparent 49%, #2c2c2c 49.5%, #2c2c2c 50.5%, transparent 51%) no-repeat 8% 10% / 15rpx 70%,
+    linear-gradient(90deg, transparent 49%, #2c2c2c 49.5%, #2c2c2c 50.5%, transparent 51%) no-repeat 11% -10% / 15rpx 90%,
+    linear-gradient(90deg, transparent 49%, #2c2c2c 49.5%, #2c2c2c 50.5%, transparent 51%) no-repeat 85% 0 / 15rpx 85%,
+    linear-gradient(90deg, transparent 49%, #2c2c2c 49.5%, #2c2c2c 50.5%, transparent 51%) no-repeat 88% 5% / 15rpx 75%,
+    linear-gradient(90deg, transparent 49%, #2c2c2c 49.5%, #2c2c2c 50.5%, transparent 51%) no-repeat 91% -5% / 15rpx 80%;
+  opacity: 0.12;
+  animation: bambooSway 10s ease-in-out infinite;
+}
+
+.ink-dots {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  bottom: 0;
+}
+
+.ink-dots::before,
+.ink-dots::after {
+  content: '';
+  position: absolute;
+  width: 20rpx;
+  height: 20rpx;
+  background: #2c2c2c;
+  border-radius: 50%;
+  opacity: 0.05;
+}
+
+.ink-dots::before {
+  content: '';
+  position: absolute;
+  width: 400rpx;
+  height: 200rpx;
+  background: radial-gradient(ellipse at center, #2c2c2c 0%, transparent 70%);
+  filter: blur(30rpx);
+  opacity: 0.08;
+  left: 20%;
+  bottom: 40%;
+  animation: mistFloat 15s ease-in-out infinite;
+}
+
+.ink-dots::after {
+  content: '';
+  position: absolute;
+  width: 500rpx;
+  height: 250rpx;
+  background: radial-gradient(ellipse at center, #2c2c2c 0%, transparent 70%);
+  filter: blur(40rpx);
+  opacity: 0.06;
+  right: 10%;
+  bottom: 30%;
+  animation: mistFloat 20s ease-in-out infinite reverse;
+}
+
+@keyframes mountainFloat {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.03);
+  }
+}
+
+@keyframes bambooSway {
+  0%, 100% {
+    transform: rotate(-2deg) translateX(-10rpx);
+  }
+  50% {
+    transform: rotate(2deg) translateX(10rpx);
+  }
+}
+
+@keyframes mistFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(60rpx, -30rpx) scale(1.2);
+  }
+  75% {
+    transform: translate(-60rpx, 30rpx) scale(0.8);
+  }
 }
 
 .user-card {
   margin: 40rpx 32rpx 0;
   padding: 32rpx;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   border-radius: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
   position: relative;
+  z-index: 2;
 }
 
 .user-info {
@@ -80,10 +205,13 @@
 
 .feature-list {
   margin: 32rpx;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   border-radius: 24rpx;
   padding: 0 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  z-index: 2;
+  position: relative;
 }
 
 .feature-item {
@@ -134,7 +262,7 @@
   padding: 0;
   font-size: 32rpx;
   font-weight: normal;
-  color: #8E9AAF;
+  color: #B4A5A5;
   background: none;
   line-height: 1.5;
 }
@@ -193,7 +321,7 @@
 .confirm-btn {
   width: 100%;
   height: 88rpx;
-  background: #8E9AAF;
+  background: #B4A5A5;
   color: #fff;
   border-radius: 12rpx;
   font-size: 32rpx;
@@ -204,75 +332,158 @@
 }
 
 .confirm-btn[disabled] {
-  background: rgba(142, 154, 175, 0.6);
+  background: rgba(180, 165, 165, 0.6);
   color: #fff;
 }
 
 /* 底部信息样式 */
-.footer-info {
+.daily-quote {
   margin: 48rpx 32rpx;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
   position: relative;
-  padding-top: 48rpx;
+  z-index: 2;
+  padding: 60rpx 40rpx;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  overflow: hidden;
 }
 
-.footer-info::before {
-  content: '';
+/* 装饰边框 */
+.quote-border {
   position: absolute;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 48rpx;
-  height: 4rpx;
-  background: #CBC0D3;
-  border-radius: 2rpx;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
 }
 
-.version {
-  font-size: 24rpx;
-  color: #8E9AAF;
-  letter-spacing: 2rpx;
-}
-
-.copyright {
-  font-size: 20rpx;
-  color: #CBC0D3;
-  letter-spacing: 1rpx;
-}
-
-/* 底部装饰 */
-.footer-decoration {
-  margin: 32rpx auto;
-  width: 120rpx;
-  height: 120rpx;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.footer-decoration::before,
-.footer-decoration::after {
-  content: '';
+.corner {
   position: absolute;
-  border-radius: 50%;
-  animation: ripple 4s ease-in-out infinite;
+  width: 40rpx;
+  height: 40rpx;
+  border-color: #B4A5A5;
+  opacity: 0.6;
 }
 
-.footer-decoration::before {
-  width: 80rpx;
-  height: 80rpx;
-  background: rgba(142, 154, 175, 0.1);
-  animation-delay: -2s;
+.top-left {
+  top: 20rpx;
+  left: 20rpx;
+  border-top: 4rpx solid;
+  border-left: 4rpx solid;
 }
 
-.footer-decoration::after {
+.top-right {
+  top: 20rpx;
+  right: 20rpx;
+  border-top: 4rpx solid;
+  border-right: 4rpx solid;
+}
+
+.bottom-left {
+  bottom: 20rpx;
+  left: 20rpx;
+  border-bottom: 4rpx solid;
+  border-left: 4rpx solid;
+}
+
+.bottom-right {
+  bottom: 20rpx;
+  right: 20rpx;
+  border-bottom: 4rpx solid;
+  border-right: 4rpx solid;
+}
+
+/* 水墨装饰 */
+.ink-decoration {
+  position: absolute;
+  width: 120rpx;
+  height: 200rpx;
+  background: radial-gradient(ellipse at center, rgba(180, 165, 165, 0.1) 0%, transparent 70%);
+  filter: blur(10rpx);
+  animation: inkFloat 8s ease-in-out infinite;
+}
+
+.ink-decoration.left {
+  left: -20rpx;
+  top: 30%;
+  transform: rotate(-45deg);
+  animation-delay: -4s;
+}
+
+.ink-decoration.right {
+  right: -20rpx;
+  top: 40%;
+  transform: rotate(45deg);
+}
+
+.quote-content {
+  position: relative;
+  display: inline-block;
+  max-width: 80%;
+}
+
+.quote-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32rpx;
+}
+
+.quote-title {
+  font-size: 32rpx;
+  color: #B4A5A5;
+  margin: 0 24rpx;
+  letter-spacing: 4rpx;
+}
+
+.ink-line {
+  height: 2rpx;
   width: 60rpx;
-  height: 60rpx;
-  background: rgba(203, 192, 211, 0.1);
+  background: linear-gradient(90deg, transparent, #B4A5A5, transparent);
+}
+
+.quote-text {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.8;
+  letter-spacing: 2rpx;
+  display: inline-block;
+  margin: 16rpx 0;
+  animation: fadeIn 1s ease-out;
+}
+
+.quote-mark {
+  font-size: 32rpx;
+  color: #B4A5A5;
+  font-weight: 300;
+  opacity: 0.8;
+  display: inline-block;
+  transform: translateY(4rpx);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes inkFloat {
+  0%, 100% {
+    transform: rotate(-45deg) translateY(0);
+    opacity: 0.1;
+  }
+  50% {
+    transform: rotate(-45deg) translateY(-20rpx);
+    opacity: 0.15;
+  }
 }
 
 /* 中间的水墨点 */
@@ -320,4 +531,148 @@
   to {
     transform: translate(-50%, -50%) rotate(360deg);
   }
+}
+
+.bio {
+  font-size: 24rpx;
+  color: #999;
+  padding: 4rpx 0;
+}
+
+/* 个人简介输入框样式 */
+.bio-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bio-content {
+  width: 560rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 40rpx;
+  box-sizing: border-box;
+}
+
+.bio-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 32rpx;
+  text-align: center;
+}
+
+.bio-input {
+  width: 100%;
+  height: 200rpx;
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  font-size: 28rpx;
+  margin-bottom: 24rpx;
+  box-sizing: border-box;
+}
+
+.bio-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bio-count {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.login-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0;
+}
+
+.login-loading text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 未登录状态样式 */
+.login-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 0;
+}
+
+.default-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  margin-bottom: 32rpx;
+  background: #f0f0f0;
+  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.login-btn {
+  width: 240rpx !important;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 32rpx;
+  color: #fff;
+  background: linear-gradient(135deg, #B4A5A5 0%, #8E8E8E 100%);
+  border: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-btn::after {
+  display: none;
+}
+
+.login-text {
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+  font-weight: 500;
+}
+
+.login-desc {
+  font-size: 26rpx;
+  color: #999;
+  margin: 24rpx 0 48rpx;
+}
+
+.login-features {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  padding: 0 48rpx;
+  margin-top: 20rpx;
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.feature-icon {
+  font-size: 40rpx;
+  margin-bottom: 8rpx;
+}
+
+.feature-text {
+  font-size: 24rpx;
+  color: #666;
 } 
