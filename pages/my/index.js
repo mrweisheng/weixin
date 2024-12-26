@@ -117,6 +117,8 @@ Page({
             title: '登录成功',
             icon: 'success'
           });
+
+          await this.getUserLatestInfo();  // 获取完整的用户信息
         } else {
           console.error('登录接口返回错误:', res.data);
           throw new Error(res.data.msg || '登录失败');
@@ -209,7 +211,7 @@ Page({
 
       // 7. 获取图片数据
       const base64Data = canvas.toDataURL('image/jpeg', 0.9);
-      console.log('图片处理完成���数据长度:', base64Data.length);
+      console.log('图片处理完成数据长度:', base64Data.length);
 
       // 8. 调用更新接口
       const updateRes = await new Promise((resolve, reject) => {
@@ -243,6 +245,8 @@ Page({
           title: '更新成功',
           icon: 'success'
         });
+
+        await this.getUserLatestInfo();  // 获取最新用户信息
       } else {
         throw new Error(updateRes.data.msg || '更新失败');
       }
@@ -309,6 +313,8 @@ Page({
           title: '更新成功',
           icon: 'success'
         });
+
+        await this.getUserLatestInfo();  // 获取最新用户信息
       } else {
         throw new Error(res.data.msg || '更新失败');
       }
@@ -318,6 +324,92 @@ Page({
         title: err.message || '更新失败，请重试',
         icon: 'none'
       });
+    }
+  },
+
+  // 点击我的点赞
+  goToMyLikes() {
+    if (!this.data.userInfo) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    if (!this.data.likesCount) {
+      wx.showToast({
+        title: '暂无点赞内容',
+        icon: 'none'
+      });
+      return;
+    }
+
+    wx.navigateTo({
+      url: '/pages/my/likes/index'
+    });
+  },
+
+  // 点击我的收藏
+  goToMyFavorites() {
+    if (!this.data.userInfo) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    if (!this.data.collectCount) {
+      wx.showToast({
+        title: '暂无收藏内容',
+        icon: 'none'
+      });
+      return;
+    }
+
+    wx.navigateTo({
+      url: '/pages/my/favorites/index'
+    });
+  },
+
+  // 获取最新的用户信息
+  async getUserLatestInfo() {
+    try {
+      const token = wx.getStorageSync('token');
+      if (!token) return;
+
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: 'https://jiekou.hkstudy.asia/api/user/info',
+          method: 'POST',
+          header: {
+            'Authorization': `Bearer ${token}`
+          },
+          success: resolve,
+          fail: reject
+        });
+      });
+
+      console.log('获取用户信息返回:', res.data);
+      if (res.data.code === 0) {
+        // 转换字段名以匹配页面使用
+        const userInfo = {
+          ...res.data.data,
+          nickName: res.data.data.nickname,
+          avatarUrl: res.data.data.avatar
+        };
+        this.updateUserInfo(userInfo);
+      }
+    } catch (err) {
+      console.error('获取用户信息失败:', err);
+    }
+  },
+
+  onShow() {
+    // 每次显示页面时获取最新信息
+    if (this.data.userInfo) {
+      this.getUserLatestInfo();
     }
   }
 }); 

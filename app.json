@@ -4,8 +4,8 @@
     "pages/all/index",
     "pages/my/index",
     "pages/detail/index",
-    "pages/favorites/index",
-    "pages/likes/index"
+    "pages/my/likes/index",
+    "pages/my/favorites/index"
   ],
   "window": {
     "backgroundTextStyle": "light",

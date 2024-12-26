@@ -1,5 +1,3 @@
-<custom-nav-bar title="全部" />
-
 <view class="container">
   <view class="grid-list">
     <view class="grid-item" 
@@ -22,8 +20,8 @@
       </view>
     </view>
   </view>
-  
-  <view class="loading-status" wx:if="{{loading || !hasMore}}">
-    <text>{{loading ? '加载中...' : '没有更多了'}}</text>
+
+  <view class="empty-tip" wx:if="{{!loading && imageList.length === 0}}">
+    <text>暂无点赞内容</text>
   </view>
 </view> 

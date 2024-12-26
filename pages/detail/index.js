@@ -9,7 +9,8 @@ Page({
     imageId: '',      // 图片ID
     isLiked: false,   // 是否已点赞
     likesCount: 0,    // 点赞数量
-    userInfo: null    // 用户信息
+    userInfo: null,    // 用户信息
+    isFavorited: false
   },
 
   onLoad(options) {
@@ -75,14 +76,6 @@ Page({
     // TODO: 实现点赞功能
     wx.showToast({
       title: '点赞功能开发中',
-      icon: 'none'
-    });
-  },
-
-  onFavoriteTap() {
-    // TODO: 实现收藏功能
-    wx.showToast({
-      title: '收藏功能开发中',
       icon: 'none'
     });
   },
@@ -171,5 +164,69 @@ Page({
         icon: 'none'
       });
     }
+  },
+
+  // 处理收藏/取消收藏
+  handleFavorite() {
+    const userInfo = wx.getStorageSync('userInfo');
+    console.log('开始收藏操作, 用户信息:', userInfo);
+    if (!userInfo) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    const token = wx.getStorageSync('token');
+    console.log('请求参数:', {
+      image_id: this.data.imageInfo._id,
+      openid: userInfo.openid
+    });
+
+    wx.request({
+      url: 'https://jiekou.hkstudy.asia/api/interaction/favorite',
+      method: 'POST',
+      header: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        image_id: this.data.imageInfo._id,
+        openid: userInfo.openid
+      },
+      success: (res) => {
+        console.log('收藏响应:', res.data);
+        if (res.data.code === 0) {
+          // 更新收藏状态和数量
+          const imageInfo = { ...this.data.imageInfo };
+          imageInfo.collection = res.data.data.collection;
+          
+          console.log('更新前状态:', {
+            原收藏数: this.data.collectCount,
+            新收藏数: res.data.data.collection,
+            收藏状态: res.data.data.isFavorited
+          });
+
+          this.setData({
+            imageInfo,
+            isFavorited: res.data.data.isFavorited,
+            collectCount: res.data.data.collection
+          }, () => {
+            console.log('更新后状态:', {
+              收藏数: this.data.collectCount,
+              收藏状态: this.data.isFavorited
+            });
+          });
+          
+          wx.showToast({
+            title: res.data.data.isFavorited ? '收藏成功' : '已取消收藏',
+            icon: 'success'
+          });
+        }
+      },
+      fail: (err) => {
+        console.error('收藏请求失败:', err);
+      }
+    });
   }
 }); 

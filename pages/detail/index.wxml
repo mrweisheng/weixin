@@ -27,7 +27,7 @@
         <image src="/assets/images/likes.png" mode="aspectFit" />
         <text class="stat-count">{{likesCount}}</text>
       </view>
-      <view class="stat-item" bindtap="onFavoriteTap">
+      <view class="stat-item" bindtap="handleFavorite">
         <image src="/assets/images/favorites.png" mode="aspectFit" />
         <text class="stat-count">{{collectCount}}</text>
       </view>

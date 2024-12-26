@@ -53,7 +53,7 @@
   height: 32rpx;
 }
 
-.loading-status {
+.empty-tip {
   text-align: center;
   padding: 32rpx;
   color: #999;
