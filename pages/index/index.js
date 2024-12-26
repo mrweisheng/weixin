@@ -38,7 +38,7 @@ Page({
   onImageTap(e) {
     const { info } = e.currentTarget.dataset;
     wx.navigateTo({
-      url: `/pages/detail/index?id=${info.id}`
+      url: `/pages/detail/index?id=${info._id}`
     });
   },
 
@@ -46,5 +46,12 @@ Page({
     wx.switchTab({
       url: '/pages/all/index'
     });
+  },
+
+  onUnload() {
+    getApp().globalData = {
+      ...getApp().globalData,
+      allContentList: this.data.allContentList
+    };
   }
 });
