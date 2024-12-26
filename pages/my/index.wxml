@@ -1,0 +1,80 @@
+<view class="page">
+  <!-- 顶部用户信息卡片 -->
+  <view class="user-card">
+    <view class="user-info">
+      <block wx:if="{{userInfo}}">
+        <image 
+          class="avatar" 
+          src="{{userInfo.avatarUrl || userInfo.avatar}}" 
+          bindtap="onUpdateAvatar"
+        />
+        <view class="info-content">
+          <text class="name" bindtap="onUpdateNickname">
+            {{userInfo.nickName || userInfo.nickname}}
+          </text>
+          <text class="bio">这个人很懒，什么都没写~</text>
+        </view>
+      </block>
+      <block wx:else>
+        <image class="avatar" src="/assets/images/default-avatar.png" />
+        <view class="info-content">
+          <button 
+            class="login-btn"
+            open-type="chooseAvatar" 
+            bindchooseavatar="onChooseAvatar">
+            点击授权头像
+          </button>
+          <text class="login-desc">登录后可以体验更多功能</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 昵称输入框，根据不同场景调用不同方法 -->
+  <view class="nickname-modal" wx:if="{{showNicknameInput}}">
+    <view class="nickname-content">
+      <text class="nickname-title">请输入昵称</text>
+      <input 
+        type="nickname" 
+        class="nickname-input" 
+        placeholder="请输入昵称" 
+        model:value="{{tempNickname}}"
+        focus="{{true}}"
+      />
+      <button 
+        class="confirm-btn" 
+        bindtap="{{userInfo ? 'onConfirmUpdateNickname' : 'onConfirmNickname'}}"
+        disabled="{{!tempNickname}}">
+        确定
+      </button>
+    </view>
+  </view>
+
+  <!-- 功能卡片区域 -->
+  <view class="cards-section">
+    <navigator url="/pages/likes/index" class="feature-card">
+      <view class="card-content">
+        <image src="/assets/images/likes.png" class="card-icon" />
+        <view class="card-info">
+          <text class="card-title">我的点赞</text>
+          <text class="card-desc">查看我点赞过的作品 ({{likesCount}})</text>
+        </view>
+      </view>
+      <text class="card-arrow">›</text>
+    </navigator>
+
+    <navigator url="/pages/favorites/index" class="feature-card">
+      <view class="card-content">
+        <image src="/assets/images/favorites.png" class="card-icon" />
+        <view class="card-info">
+          <text class="card-title">我的收藏</text>
+          <text class="card-desc">查看我收藏的作品 ({{collectCount}})</text>
+        </view>
+      </view>
+      <text class="card-arrow">›</text>
+    </navigator>
+  </view>
+
+  <!-- 在页面底部添加 canvas -->
+  <canvas type="2d" id="avatarCanvas" style="width: 400px; height: 400px; position: fixed; left: -500px;"></canvas>
+</view> 

@@ -1,0 +1,37 @@
+<custom-nav-bar title="我的收藏" />
+
+<view class="container" style="margin-top: {{statusBarHeight + navBarHeight}}px">
+  <block wx:if="{{imageList.length > 0}}">
+    <view class="image-grid">
+      <view class="image-item" 
+        wx:for="{{imageList}}" 
+        wx:key="id"
+        data-info="{{item}}"
+        bindtap="onImageTap">
+        <image src="{{item.imageUrl}}" mode="aspectFill" class="item-image" />
+        <view class="item-info">
+          <text class="item-time">{{item.time}}</text>
+          <view class="info-stats">
+            <view class="stat-item">
+              <text class="iconfont icon-like"></text>
+              <text>{{item.likes}}</text>
+            </view>
+            <view class="stat-item">
+              <text class="iconfont icon-comment"></text>
+              <text>{{item.comments}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="loading-status" wx:if="{{loading || !hasMore}}">
+      <text>{{loading ? '加载中...' : '没有更多了'}}</text>
+    </view>
+  </block>
+
+  <view class="empty-state" wx:else>
+    <image src="/assets/images/empty.png" class="empty-image" />
+    <text class="empty-text">还没有收藏任何内容</text>
+  </view>
+</view> 

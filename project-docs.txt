@@ -1,0 +1,264 @@
+# 浮图物相小程序开发文档
+
+## 一、项目概述
+一个展示和分享街拍、风景等图片的小程序平台。
+- 开发工具：微信开发者工具
+- 基础框架：原生微信小程序
+
+## 二、页面结构
+
+### 1. 首页 (pages/index/index)
+布局结构:
+1. 自定义导航栏
+   - 使用 custom-nav-bar 组件
+   - 固定定位在顶部
+   - 背景色 #ffffff
+   - 标题文字 "浮图物相"
+   - 标题字号 18px，加粗
+   - 需要通过 wx.getSystemInfoSync() 获取状态栏高度进行适配
+
+2. 轮播图模块
+   - 使用 swiper 组件
+   - 高度 250px
+   - 图片使用 mode="aspectFill"
+   - 图片圆角 12px
+   - 配置项:
+     ```js
+     circular: true
+     indicator-dots: true
+     autoplay: true
+     interval: 3000
+     duration: 1000
+     ```
+
+3. 每日推荐区域
+   - 标题栏使用 flex 布局
+     - 左侧标题 "每日推荐"，16px，加粗
+     - 右侧日期，14px，颜色 #999
+   - 内容区使用 scroll-view
+     - scroll-x: true 
+     - white-space: nowrap
+   - 推荐项样式:
+     - 宽度 160px
+     - 高度 220px
+     - 右边距 10px
+     - 图片圆角 8px
+     - 点击态透明度 0.8
+
+4. 全部内容区域
+   - 标题 "全部内容"，16px，加粗
+   - 使用 grid 布局
+     - grid-template-columns: repeat(3, 1fr)
+     - gap: 10px
+   - 图片项样式:
+     - 高度 120px
+     - 图片圆角 8px
+     - 使用 mode="aspectFill"
+   - 查看全部按钮:
+     - 背景色 #f5f5f5
+     - 圆角 8px
+     - 居中显示"..."和"查看全部"文字
+
+整体页面样式:
+- 背景色 #f8f8f8
+- 内容区域左右padding 12px
+
+### 2. 全部图片页面 (pages/all/index)
+布局结构:
+1. 图片列表区域
+   - 使用 grid 布局
+   - grid-template-columns: repeat(2, 1fr)
+   - gap: 12px
+   - padding: 12px
+   
+2. 图片项样式
+   - 宽度自适应
+   - aspect-ratio: 3/4
+   - 图片圆角 8px
+   - 使用 mode="aspectFill"
+
+3. 加载状态提示
+   - 固定定位在底部
+   - 背景色 #ffffff
+   - 文字居中
+   - 字号 14px
+   - 颜色 #999
+   - 上边框阴影 0 -1px 6px rgba(0,0,0,0.05)
+   - padding: 12px 0
+
+### 3. 图片详情页 (pages/detail/index)
+布局结构:
+1. 主图区域
+   - 宽度 100%
+   - 高度 100vh
+   - mode="aspectFill"
+
+2. 底部操作栏
+   - 固定定位在底部
+   - 高度 50px
+   - 背景色 rgba(0,0,0,0.5)
+   - 使用 flex 布局
+   - justify-content: space-around
+   - align-items: center
+
+3. 操作按钮样式
+   - 图标字号 24px
+   - 计数文字 14px，白色
+   - 未激活状态透明度 0.8
+   - 激活状态透明度 1
+
+4. 评论区域
+   - padding: 15px
+   - 底部留出 50px 空间(为底部操作栏)
+   
+5. 评论输入框
+   - 固定定位在底部操作栏上方
+   - 背景色 #ffffff
+   - 上边框 1px solid #eee
+   - padding: 10px
+   - 输入框样式:
+     - flex: 1
+     - 高度 36px
+     - 背景色 #f5f5f5
+     - 圆角 18px
+     - 左内边距 15px
+   - 发送按钮:
+     - 宽度 60px
+     - 高度 36px
+     - 背景色 #00CC99
+     - 圆角 18px
+     - 文字颜色 #fff
+     - 字号 14px
+
+### 4. 个人中心页面 (pages/my/index)
+布局结构:
+1. 用户信息区域
+   - 背景色 #ffffff
+   - padding: 20px
+   - 使用 flex 布局
+   - align-items: center
+
+2. 头像区域
+   - 宽高 80px
+   - 圆形
+   - 右边距 15px
+   - 未登录时显示默认头像和"点击登录"文字
+
+3. 用户信息
+   - 昵称字号 18px，加粗
+   - 描述文字 14px，颜色 #999
+
+4. 功能列表
+   - 背景色 #ffffff
+   - margin-top: 10px
+   
+5. 功能项样式
+   - padding: 15px 20px
+   - 底部边框 1px solid #f5f5f5
+   - 使用 flex 布局
+   - align-items: center
+   - 图标右边距 10px
+   - 箭头使用 > 符号
+   - 点击态背景色 #f5f5f5
+
+### 5. 收藏/点赞列表页面 (pages/favorites/index, pages/likes/index)
+布局结构:
+1. 图片列表
+   - 使用 grid 布局
+   - grid-template-columns: repeat(2, 1fr)
+   - gap: 10px
+   - padding: 10px
+   - 背景色 #f8f8f8
+
+2. 图片项样式
+   - 背景色 #ffffff
+   - 圆角 8px
+   - 图片高度 200px
+   - mode="aspectFill"
+   
+3. 图片信息区
+   - padding: 8px
+   - 时间字号 12px，颜色 #999
+   - 统计信息使用 flex 布局
+   - gap: 10px
+   - 统计项字号 12px，颜色 #666
+
+4. 空状态展示
+   - 垂直居中
+   - 图片尺寸 200px x 200px
+   - 文字颜色 #999
+   - 字号 14px
+
+[继续补充其他页面...] 
+
+## 三、TabBar 配置
+配置三个主要页面:
+1. 推荐页
+   - 图标: home.png/home-active.png
+   - 文字: "推荐"
+   - 路径: pages/index/index
+
+2. 全部页
+   - 图标: all.png/all-active.png
+   - 文字: "全部"
+   - 路径: pages/all/index
+
+3. 我的页
+   - 图标: my.png/my-active.png
+   - 文字: "我的"
+   - 路径: pages/my/index
+
+TabBar 样式:
+- 默认文字颜色: #999999
+- 选中文字颜色: #333333
+- 背景色: #ffffff
+- 边框颜色: black
+
+## 四、公共组件
+
+### 1. 评论列表组件 (components/comment-list)
+布局结构:
+1. 评论头部
+   - padding: 15px
+   - 底部边框 1px solid #f5f5f5
+   - 标题字号 16px，加粗
+
+2. 评论项
+   - padding: 15px
+   - 使用 flex 布局
+   - 头像尺寸 40px x 40px，圆形
+   - 右侧内容:
+     - 昵称 14px，加粗
+     - 内容 14px，颜色 #666
+     - 时间 12px，颜色 #999
+
+3. 加载状态
+   - 文字居中
+   - padding: 15px
+   - 颜色 #999
+   - 字号 14px
+
+## 五、静态资源
+
+### 1. TabBar 图标
+- home.png/home-active.png
+- all.png/all-active.png
+- my.png/my-active.png
+
+### 2. 默认图片
+- default-avatar.png: 默认头像
+- empty.png: 空状态提示图
+
+## 六、页面跳转说明
+
+1. 页面间导航
+   - 图片详情: navigateTo `/pages/detail/index`
+   - 我的收藏: navigateTo `/pages/favorites/index`
+   - 我的点赞: navigateTo `/pages/likes/index`
+   - TabBar页面: switchTab
+
+2. 参数传递
+   - 图片详情页通过 query 参数传递图片信息
+   ```js
+   url: `/pages/detail/index?info=${encodeURIComponent(JSON.stringify(imageInfo))}`
+   ``` 

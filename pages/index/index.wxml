@@ -1,0 +1,62 @@
+<!--index.wxml-->
+<view class="container">
+  <!-- 轮播图 -->
+  <swiper class="banner" 
+    circular
+    indicator-dots
+    autoplay
+    interval="3000"
+    duration="1000">
+    <swiper-item wx:for="{{bannerList}}" 
+      wx:key="id"
+      bindtap="onImageTap"
+      data-info="{{item}}">
+      <image src="{{item.main_url}}" mode="aspectFill" class="banner-image" />
+    </swiper-item>
+  </swiper>
+
+  <!-- 每日推荐 -->
+  <view class="recommend-section">
+    <view class="section-header">
+      <text class="section-title">每日推荐</text>
+      <text class="current-date">{{currentDate}}</text>
+    </view>
+    <scroll-view 
+      scroll-x 
+      class="recommend-scroll"
+      enable-flex
+      scroll-anchoring
+      enhanced="true"
+      show-scrollbar="false">
+      <view class="recommend-list">
+        <view class="recommend-item"
+          wx:for="{{recommendList}}"
+          wx:key="id"
+          data-info="{{item}}"
+          bindtap="onImageTap">
+          <image src="{{item.main_url}}" mode="aspectFill" class="recommend-image" />
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 全部内容 -->
+  <view class="all-section">
+    <view class="section-header">
+      <text class="section-title">全部内容</text>
+    </view>
+    <view class="grid-list">
+      <view class="grid-item" 
+        wx:for="{{allContentList}}" 
+        wx:key="id"
+        data-info="{{item}}"
+        bindtap="onImageTap">
+        <image src="{{item.main_url}}" mode="aspectFill" class="grid-image" />
+      </view>
+      <!-- 查看全部作为最后一个网格项 -->
+      <view class="grid-item view-all" bindtap="onViewAllTap">
+        <text>...查看全部</text>
+      </view>
+    </view>
+  </view>
+</view> 
