@@ -14,7 +14,7 @@
         <image 
           class="avatar" 
           src="{{userInfo.avatarUrl || userInfo.avatar}}" 
-          bindtap="onUpdateAvatar"
+          bindtap="{{userInfo ? 'onPreviewAvatar' : 'onUpdateAvatar'}}"
         />
         <view class="info-content">
           <text class="name" bindtap="onUpdateNickname">

@@ -6,7 +6,11 @@ Page({
     allContentList: [],
     currentDate: '',
     loading: true,
-    imageLoadStatus: {}  // 记录图片加载状态
+    imageLoadStatus: {},  // 记录图片加载状态
+    visibleRange: {
+      start: 0,
+      end: 10
+    }
   },
 
   onLoad() {
@@ -27,10 +31,15 @@ Page({
         console.log('首页数据返回:', res.data);
         
         if(res.data.code === 0) {
-          // 处理图片列表，添加缩略图
+          // 为每个图片添加缩略图和高清图
           const processedList = res.data.data.allContentList.map(item => ({
             ...item,
-            thumbnail: item.url + '?x-oss-process=image/resize,w_200',  // 生成缩略图URL
+            // 添加一个超小的模糊缩略图
+            thumbnail: item.main_url + '?x-oss-process=image/resize,w_50/quality,q_50/blur,r_3,s_2',
+            // 添加中等质量的预览图
+            preview: item.main_url + '?x-oss-process=image/resize,w_400/quality,q_75',
+            // 原图
+            main_url: item.main_url,
             loaded: false
           }));
           
@@ -110,9 +119,14 @@ Page({
 
   // 图片加载完成处理
   onImageLoad(e) {
-    const { index } = e.currentTarget.dataset;
+    const { index, type } = e.currentTarget.dataset;
     const { imageLoadStatus } = this.data;
-    imageLoadStatus[index] = true;
+    
+    if (!imageLoadStatus[index]) {
+      imageLoadStatus[index] = {};
+    }
+    imageLoadStatus[index][type] = true;
+    
     this.setData({ imageLoadStatus });
   },
 
@@ -120,5 +134,43 @@ Page({
   onImageError(e) {
     const { index } = e.currentTarget.dataset;
     console.error('图片加载失败:', e, index);
+  },
+
+  // 添加预加载函数
+  preloadImages() {
+    const { allContentList } = this.data;
+    const visibleItems = allContentList.slice(0, 6); // 只预加载前6张
+    
+    visibleItems.forEach(item => {
+      wx.getImageInfo({
+        src: item.main_url,
+        success: () => {
+          // 图片预加载完成
+        }
+      });
+    });
+  },
+
+  onPageScroll(e) {
+    // 根据滚动位置计算可见范围
+    const query = wx.createSelectorQuery();
+    query.selectAll('.grid-item').boundingClientRect((rects) => {
+      const windowHeight = wx.getSystemInfoSync().windowHeight;
+      let start = this.data.visibleRange.start;
+      let end = this.data.visibleRange.end;
+      
+      rects.forEach((rect, index) => {
+        if (rect.top < windowHeight && rect.bottom > 0) {
+          start = Math.max(0, index - 2);
+          end = Math.min(this.data.allContentList.length, index + 8);
+        }
+      });
+      
+      if (start !== this.data.visibleRange.start || end !== this.data.visibleRange.end) {
+        this.setData({
+          visibleRange: { start, end }
+        });
+      }
+    }).exec();
   }
 });

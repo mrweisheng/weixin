@@ -51,16 +51,30 @@
         wx:key="id"
         data-info="{{item}}"
         bindtap="onImageTap">
+        <!-- 缩略图 -->
         <image 
-          class="image {{!imageLoadStatus[index] ? 'hidden' : ''}}"
+          class="thumbnail"
+          src="{{item.thumbnail}}"
+          mode="aspectFill"
+        />
+        <!-- 预览图 -->
+        <image 
+          class="preview {{!imageLoadStatus[index].preview ? 'hidden' : ''}}"
+          src="{{item.preview}}"
+          mode="aspectFill"
+          data-index="{{index}}"
+          data-type="preview"
+          bindload="onImageLoad"
+        />
+        <!-- 高清图 -->
+        <image 
+          class="main-image {{!imageLoadStatus[index].main ? 'hidden' : ''}}"
           src="{{item.main_url}}"
           mode="aspectFill"
           lazy-load="{{true}}"
           data-index="{{index}}"
+          data-type="main"
           bindload="onImageLoad"
-          binderror="onImageError"
-          webp="{{true}}"
-          show-menu-by-longpress
         />
       </view>
       <!-- 查看全部作为最后一个网格项 -->

@@ -1,3 +1,5 @@
+import Auth from '../../utils/auth';
+
 Page({
   data: {
     userInfo: null,
@@ -14,6 +16,60 @@ Page({
 
   onLoad() {
     this.getDailyQuote();
+    this.checkAndUpdateLoginStatus();
+    
+    // 添加登录状态监听
+    Auth.onLoginStateChange(this.handleLoginStateChange.bind(this));
+  },
+
+  onUnload() {
+    // 移除登录状态监听
+    Auth.offLoginStateChange(this.handleLoginStateChange.bind(this));
+  },
+
+  handleLoginStateChange(isLoggedIn) {
+    if (!isLoggedIn) {
+      this.setData({
+        userInfo: null,
+        likesCount: 0,
+        collectCount: 0
+      });
+    } else {
+      this.getUserLatestInfo();
+    }
+  },
+
+  // 检查并更新登录状态
+  async checkAndUpdateLoginStatus() {
+    try {
+      const isLoggedIn = await Auth.checkLoginStatus();
+      if (!isLoggedIn) {
+        // 未登录时清除信息
+        this.setData({
+          userInfo: null,
+          likesCount: 0,
+          collectCount: 0
+        });
+        Auth.clearLoginInfo();
+        return;
+      }
+
+      // 已登录则获取用户信息
+      const userInfo = Auth.getUserInfo();
+      if (userInfo) {
+        this.setData({ userInfo });
+        this.getUserLatestInfo();
+      }
+    } catch (err) {
+      console.error('检查登录状态失败:', err);
+      // 发生错误时也清除信息
+      this.setData({
+        userInfo: null,
+        likesCount: 0,
+        collectCount: 0
+      });
+      Auth.clearLoginInfo();
+    }
   },
 
   // 点击登录按钮
@@ -45,7 +101,8 @@ Page({
         const { isNewUser, userInfo, token, tokenExpired } = res.data.data;
         
         if (isNewUser) {
-          // 新用户，需要授权信息
+          // 新���户，需要授权信息
+          wx.hideLoading();
           wx.showModal({
             title: '欢迎使用',
             content: '首次使用需要授权头像和昵称',
@@ -66,10 +123,10 @@ Page({
             avatarUrl: userInfo.avatar
           };
           
-          // 保存登录信息
+          // 使用 Auth 类保存登录信息
           wx.setStorageSync('token', token);
           wx.setStorageSync('tokenExpired', tokenExpired);
-          wx.setStorageSync('userInfo', formattedUserInfo);
+          Auth.saveUserInfo(formattedUserInfo);
           
           this.setData({
             userInfo: formattedUserInfo,
@@ -90,10 +147,7 @@ Page({
       }
     } catch (err) {
       console.error('登录失败:', err);
-      wx.showToast({
-        title: err.message || '登录失败，请重试',
-        icon: 'none'
-      });
+      Auth.handleApiError(err);
     } finally {
       wx.hideLoading();
     }
@@ -197,7 +251,7 @@ Page({
     }
   },
 
-  // 点击头像修改头像
+  // ���击头像修改头像
   async onUpdateAvatar() {
     try {
       // 从相册选择图片
@@ -205,6 +259,12 @@ Page({
         count: 1,
         sizeType: ['compressed'],
         sourceType: ['album']
+      });
+
+      // 显示处理进度
+      wx.showLoading({
+        title: '处理图片中...',
+        mask: true  // 添加蒙层防止重复操作
       });
 
       const tempFilePath = res.tempFilePaths[0];
@@ -225,8 +285,14 @@ Page({
         });
       });
 
+      // 更新loading提示
+      wx.showLoading({
+        title: '优化图片中...',
+        mask: true
+      });
+
       // 2. 获取 canvas 上下文
-      const query = this.createSelectorQuery();
+      const query = wx.createSelectorQuery();
       const canvas = await new Promise(resolve => {
         query.select('#avatarCanvas')
           .fields({ node: true, size: true })
@@ -271,6 +337,12 @@ Page({
       const base64Data = canvas.toDataURL('image/jpeg', 0.9);
       console.log('图片处理完成数据长度:', base64Data.length);
 
+      // 更新loading提示
+      wx.showLoading({
+        title: '上传中...',
+        mask: true
+      });
+
       // 8. 调用更新接口
       const updateRes = await new Promise((resolve, reject) => {
         wx.request({
@@ -290,29 +362,42 @@ Page({
       console.log('更新头像响应:', updateRes.data);
 
       if (updateRes.data.code === 0) {
-        // 更新本地存储��页面显示
+        // 隐藏loading
+        wx.hideLoading();
+        
+        // 更新本地存储和页面显示
         const newUserInfo = {
           ...this.data.userInfo,
           avatarUrl: updateRes.data.data.avatar,
           avatar: updateRes.data.data.avatar
         };
-        wx.setStorageSync('userInfo', newUserInfo);
-        this.setData({ userInfo: newUserInfo });
-
+        
+        // 先显示更新成功
         wx.showToast({
           title: '更新成功',
-          icon: 'success'
+          icon: 'success',
+          duration: 1500
         });
 
-        await this.getUserLatestInfo();  // 获取最新用户信息
+        // 使用setTimeout让toast显示完整
+        setTimeout(() => {
+          wx.setStorageSync('userInfo', newUserInfo);
+          this.setData({ userInfo: newUserInfo });
+          this.getUserLatestInfo();
+        }, 500);
+
       } else {
         throw new Error(updateRes.data.msg || '更新失败');
       }
     } catch (err) {
+      // 发生错误时隐藏loading
+      wx.hideLoading();
+      
       console.error('更新头像失败:', err);
       wx.showToast({
         title: err.message || '更新失败，请重试',
-        icon: 'none'
+        icon: 'none',
+        duration: 2000
       });
     }
   },
@@ -327,14 +412,22 @@ Page({
 
   // 确认修改昵称
   async onConfirmUpdateNickname() {
-    const nickName = this.data.tempNickname;
-    if (!nickName) return;
-
     try {
-      const token = wx.getStorageSync('token');
-      if (!token) {
-        throw new Error('未登录');
+      if (!this.data.tempNickname.trim()) {
+        wx.showToast({
+          title: '昵称不能为空',
+          icon: 'none'
+        });
+        return;
       }
+
+      wx.showLoading({
+        title: '更新中...',
+        mask: true
+      });
+
+      const token = wx.getStorageSync('token');
+      if (!token) throw new Error('未登录');
 
       const res = await new Promise((resolve, reject) => {
         wx.request({
@@ -344,44 +437,43 @@ Page({
             'Authorization': `Bearer ${token}`
           },
           data: {
-            nickname: nickName
+            nickname: this.data.tempNickname
           },
           success: resolve,
           fail: reject
         });
       });
 
-      console.log('更新昵称响应:', res.data);
-
       if (res.data.code === 0) {
-        // 更新本地存储和页面显示，保留原有信息
-        const newUserInfo = {
-          ...this.data.userInfo,  // 保留原有信息
-          nickName: res.data.data.nickname,
-          nickname: res.data.data.nickname  // 同时更新两个字段
-        };
-        wx.setStorageSync('userInfo', newUserInfo);
-        this.setData({
-          userInfo: newUserInfo,
-          showNicknameInput: false,
-          tempNickname: ''
-        });
-
+        // 先隐藏输入框
+        this.setData({ showNicknameInput: false });
+        
+        // 显示成功提示
         wx.showToast({
           title: '更新成功',
-          icon: 'success'
+          icon: 'success',
+          duration: 1500
         });
 
-        await this.getUserLatestInfo();  // 获取最新用户信息
+        // 等待动画完成后更新显示
+        setTimeout(() => {
+          const newUserInfo = {
+            ...this.data.userInfo,
+            nickName: res.data.data.nickname,
+            nickname: res.data.data.nickname
+          };
+          Auth.saveUserInfo(newUserInfo);
+          this.setData({ userInfo: newUserInfo });
+        }, 500);
+
       } else {
         throw new Error(res.data.msg || '更新失败');
       }
     } catch (err) {
       console.error('更新昵称失败:', err);
-      wx.showToast({
-        title: err.message || '更新失败，请重试',
-        icon: 'none'
-      });
+      Auth.handleApiError(err);
+    } finally {
+      wx.hideLoading();
     }
   },
 
@@ -434,9 +526,10 @@ Page({
   // 获取最新的用户信息
   async getUserLatestInfo() {
     try {
-      const token = wx.getStorageSync('token');
-      if (!token) return;
+      const isLoggedIn = await Auth.checkLoginStatus();
+      if (!isLoggedIn) return;
 
+      const token = wx.getStorageSync('token');
       const res = await new Promise((resolve, reject) => {
         wx.request({
           url: 'https://jiekou.hkstudy.asia/api/user/info',
@@ -449,18 +542,20 @@ Page({
         });
       });
 
-      console.log('获取用户信息返回:', res.data);
       if (res.data.code === 0) {
-        // 转换字段名以匹配页面使用
         const userInfo = {
           ...res.data.data,
           nickName: res.data.data.nickname,
           avatarUrl: res.data.data.avatar
         };
+        Auth.saveUserInfo(userInfo);
         this.updateUserInfo(userInfo);
+      } else {
+        throw new Error(res.data.msg || '获取用户信息失败');
       }
     } catch (err) {
       console.error('获取用户信息失败:', err);
+      Auth.handleApiError(err, { showError: false });
     }
   },
 
@@ -490,10 +585,10 @@ Page({
   },
 
   onShow() {
-    // 每次显示页面时获取最新信息
+    // 每次显示页面时检查登录状态并更新信息
+    this.checkAndUpdateLoginStatus();
     if (this.data.userInfo) {
-      this.getUserLatestInfo();
-      this.getDailyQuote();  // 每次显示页面时更新每日一句
+      this.getDailyQuote();
     }
   },
 
@@ -508,12 +603,14 @@ Page({
 
   // 确认修改个人简介
   async onConfirmUpdateBio() {
-    const bio = this.data.tempBio;
     try {
+      wx.showLoading({
+        title: '更新中...',
+        mask: true
+      });
+
       const token = wx.getStorageSync('token');
-      if (!token) {
-        throw new Error('未登录');
-      }
+      if (!token) throw new Error('未登录');
 
       const res = await new Promise((resolve, reject) => {
         wx.request({
@@ -523,7 +620,7 @@ Page({
             'Authorization': `Bearer ${token}`
           },
           data: {
-            bio: bio
+            bio: this.data.tempBio
           },
           success: resolve,
           fail: reject
@@ -531,32 +628,73 @@ Page({
       });
 
       if (res.data.code === 0) {
-        const newUserInfo = {
-          ...this.data.userInfo,
-          bio: res.data.data.bio
-        };
-        wx.setStorageSync('userInfo', newUserInfo);
-        this.setData({
-          userInfo: newUserInfo,
-          showBioInput: false,
-          tempBio: ''
-        });
-
+        // 先隐藏输入框
+        this.setData({ showBioInput: false });
+        
+        // 显示成功提示
         wx.showToast({
           title: '更新成功',
-          icon: 'success'
+          icon: 'success',
+          duration: 1500
         });
 
-        await this.getUserLatestInfo();
+        // 等待动画完成后更新显示
+        setTimeout(() => {
+          const newUserInfo = {
+            ...this.data.userInfo,
+            bio: res.data.data.bio
+          };
+          Auth.saveUserInfo(newUserInfo);
+          this.setData({ userInfo: newUserInfo });
+        }, 500);
+
       } else {
         throw new Error(res.data.msg || '更新失败');
       }
     } catch (err) {
       console.error('更新个人简介失败:', err);
-      wx.showToast({
-        title: err.message || '更新失败，请重试',
-        icon: 'none'
-      });
+      Auth.handleApiError(err);
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  // 添加头像预览功能
+  onPreviewAvatar() {
+    if (!this.data.userInfo?.avatarUrl) return;
+    
+    wx.previewImage({
+      urls: [this.data.userInfo.avatarUrl],
+      current: this.data.userInfo.avatarUrl
+    });
+  },
+
+  // 添加下拉刷新
+  async onPullDownRefresh() {
+    try {
+      // 先检查登录状态
+      const isLoggedIn = await Auth.checkLoginStatus();
+      if (!isLoggedIn) {
+        // 如果未登录，清除页面显示的用户信息
+        this.setData({
+          userInfo: null,
+          likesCount: 0,
+          collectCount: 0
+        });
+        Auth.clearLoginInfo(); // 清除存储的信息
+        return;
+      }
+
+      // 已登录则更新信息
+      await Promise.all([
+        this.getUserLatestInfo(),
+        this.getDailyQuote()
+      ]);
+    } catch (err) {
+      console.error('刷新失败:', err);
+      Auth.handleApiError(err, { showError: false });
+    } finally {
+      wx.stopPullDownRefresh();
     }
   }
 }); 
