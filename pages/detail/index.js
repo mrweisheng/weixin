@@ -42,6 +42,12 @@ Page({
 
       if (res.data.code === 0) {
         const imageData = res.data.data;
+        if (imageData.url) {
+          imageData.url = imageData.url.startsWith('http') 
+            ? imageData.url 
+            : `https://jiekou.hkstudy.asia${imageData.url}`;
+        }
+        
         this.setData({
           imageInfo: imageData,
           likesCount: imageData.likes || 0,  // 使用返回的 likes 字段
@@ -227,6 +233,15 @@ Page({
       fail: (err) => {
         console.error('收藏请求失败:', err);
       }
+    });
+  },
+
+  // 图片加载失败处理
+  onImageError(e) {
+    console.error('图片加载失败:', e);
+    wx.showToast({
+      title: '图片加载失败',
+      icon: 'none'
     });
   }
 }); 

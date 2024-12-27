@@ -26,29 +26,18 @@
         </view>
       </block>
       <block wx:else>
-        <view class="login-section">
+        <view class="user-info">
           <image class="default-avatar" src="/assets/images/default-avatar.png" />
-          <button 
-            class="login-btn"
-            bindtap="onLogin">
-            <text class="login-text">立即登录</text>
-          </button>
-          <view class="login-desc">登录后可以体验更多功能</view>
-          <view class="login-features">
-            <view class="feature-item">
-              <text class="feature-icon">👍</text>
-              <text class="feature-text">点赞收藏</text>
-            </view>
-            <view class="feature-item">
-              <text class="feature-icon">📱</text>
-              <text class="feature-text">同步数据</text>
-            </view>
-            <view class="feature-item">
-              <text class="feature-icon">🌟</text>
-              <text class="feature-text">更多功能</text>
-            </view>
+          <view class="info-content">
+            <button 
+              class="login-btn"
+              bindtap="onLogin">
+              立即登录
+            </button>
+            <text class="login-desc">登录后可以体验更多功能</text>
           </view>
         </view>
+        <view class="stats-bar"></view>
       </block>
     </view>
 
@@ -61,6 +50,24 @@
       <view class="stat-item">
         <text class="count">{{collectCount}}</text>
         <text class="label">收藏</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 未登录状态下的功能预览 -->
+  <view class="login-features-card" wx:if="{{!userInfo}}">
+    <view class="login-features">
+      <view class="feature-preview">
+        <text class="feature-icon">👍</text>
+        <text class="feature-text">点赞收藏</text>
+      </view>
+      <view class="feature-preview">
+        <text class="feature-icon">📱</text>
+        <text class="feature-text">同步数据</text>
+      </view>
+      <view class="feature-preview">
+        <text class="feature-icon">🌟</text>
+        <text class="feature-text">更多功能</text>
       </view>
     </view>
   </view>
