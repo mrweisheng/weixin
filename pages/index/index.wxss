@@ -102,9 +102,9 @@
 
 .grid-item {
   position: relative;
-  padding-bottom: 133.33%;
   border-radius: 12rpx;
   overflow: hidden;
+  aspect-ratio: 3/4;
 }
 
 .grid-item.view-all {
@@ -155,4 +155,117 @@
   margin: 0 -24rpx;
   width: 100vw;
   box-sizing: border-box;
+}
+
+/* 骨架屏动画 */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  padding: 32rpx;
+}
+
+.skeleton-banner {
+  width: 100%;
+  height: 300rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+.skeleton-section {
+  margin-top: 48rpx;
+}
+
+.skeleton-title {
+  width: 200rpx;
+  height: 40rpx;
+  background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 8rpx;
+  margin-bottom: 32rpx;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24rpx;
+}
+
+.skeleton-item {
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.skeleton-image {
+  width: 100%;
+  height: 240rpx;
+  background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+.skeleton-info {
+  padding: 16rpx;
+}
+
+.skeleton-text {
+  width: 80%;
+  height: 32rpx;
+  background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 4rpx;
+  margin-bottom: 12rpx;
+}
+
+.skeleton-text-sm {
+  width: 60%;
+  height: 24rpx;
+  background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 4rpx;
+}
+
+.image-item {
+  position: relative;
+  width: 100%;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.image-item .thumbnail,
+.image-item .image {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: opacity 0.3s ease;
+}
+
+.hidden {
+  opacity: 0;
+}
+
+.thumbnail {
+  filter: blur(10px);
+  transform: scale(1.1);
+}
+
+.grid-item .image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12rpx;
 } 

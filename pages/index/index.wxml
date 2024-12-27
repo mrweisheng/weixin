@@ -51,12 +51,40 @@
         wx:key="id"
         data-info="{{item}}"
         bindtap="onImageTap">
-        <image src="{{item.main_url}}" mode="aspectFill" class="grid-image" />
+        <image 
+          class="image {{!imageLoadStatus[index] ? 'hidden' : ''}}"
+          src="{{item.main_url}}"
+          mode="aspectFill"
+          lazy-load="{{true}}"
+          data-index="{{index}}"
+          bindload="onImageLoad"
+          binderror="onImageError"
+          webp="{{true}}"
+          show-menu-by-longpress
+        />
       </view>
       <!-- 查看全部作为最后一个网格项 -->
       <view class="grid-item view-all" bindtap="onViewAllTap">
         <text>...查看全部</text>
       </view>
     </view>
+  </view>
+
+  <!-- 骨架屏 -->
+  <view class="skeleton {{loading ? '' : 'fade-out'}}" wx:if="{{loading}}">
+    <view class="skeleton-banner"></view>
+    <view class="skeleton-section">
+      <view class="skeleton-title"></view>
+      <view class="skeleton-grid">
+        <view class="skeleton-item" wx:for="{{4}}" wx:key="index">
+          <view class="skeleton-image"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 实际内容 -->
+  <view class="content {{!loading ? 'fade-in' : ''}}">
+    <!-- 实际内容 -->
   </view>
 </view> 

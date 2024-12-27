@@ -4,7 +4,9 @@ Page({
     bannerList: [],
     recommendList: [],
     allContentList: [],
-    currentDate: ''
+    currentDate: '',
+    loading: true,
+    imageLoadStatus: {}  // 记录图片加载状态
   },
 
   onLoad() {
@@ -17,6 +19,7 @@ Page({
   },
 
   loadHomeData() {
+    this.setData({ loading: true });
     wx.request({
       url: 'https://jiekou.hkstudy.asia/api/home/data',
       method: 'POST',
@@ -24,11 +27,18 @@ Page({
         console.log('首页数据返回:', res.data);
         
         if(res.data.code === 0) {
-          const { bannerList, recommendList, allContentList } = res.data.data;
+          // 处理图片列表，添加缩略图
+          const processedList = res.data.data.allContentList.map(item => ({
+            ...item,
+            thumbnail: item.url + '?x-oss-process=image/resize,w_200',  // 生成缩略图URL
+            loaded: false
+          }));
+          
           this.setData({
-            bannerList,
-            recommendList,
-            allContentList
+            bannerList: res.data.data.bannerList,
+            recommendList: res.data.data.recommendList,
+            allContentList: processedList,
+            loading: false
           });
         }
       }
@@ -98,8 +108,17 @@ Page({
     }
   },
 
+  // 图片加载完成处理
+  onImageLoad(e) {
+    const { index } = e.currentTarget.dataset;
+    const { imageLoadStatus } = this.data;
+    imageLoadStatus[index] = true;
+    this.setData({ imageLoadStatus });
+  },
+
   // 图片加载失败处理
   onImageError(e) {
-    console.error('图片加载失败:', e.detail);
+    const { index } = e.currentTarget.dataset;
+    console.error('图片加载失败:', e, index);
   }
 });
