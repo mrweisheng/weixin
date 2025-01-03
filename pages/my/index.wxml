@@ -14,7 +14,7 @@
         <image 
           class="avatar" 
           src="{{userInfo.avatarUrl || userInfo.avatar}}" 
-          bindtap="{{userInfo ? 'onPreviewAvatar' : 'onUpdateAvatar'}}"
+          bindtap="onUpdateAvatar"
         />
         <view class="info-content">
           <text class="name" bindtap="onUpdateNickname">
@@ -30,8 +30,8 @@
           <image class="default-avatar" src="/assets/images/default-avatar.png" />
           <view class="info-content">
             <button 
-              class="login-btn"
-              bindtap="onLogin">
+              class="login-btn" 
+              bindtap="onGetUserProfile">
               立即登录
             </button>
             <text class="login-desc">登录后可以体验更多功能</text>
@@ -44,17 +44,21 @@
     <!-- 数据统计 -->
     <view class="stats-bar">
       <view class="stat-item">
-        <text class="count">{{likesCount}}</text>
+        <text class="count">
+          {{userInfo && userInfo.likes ? userInfo.likes.length : 0}}
+        </text>
         <text class="label">点赞</text>
       </view>
       <view class="stat-item">
-        <text class="count">{{collectCount}}</text>
+        <text class="count">
+          {{userInfo && userInfo.collection ? userInfo.collection.length : 0}}
+        </text>
         <text class="label">收藏</text>
       </view>
     </view>
   </view>
 
-  <!-- 未登录状态下的功能预览 -->
+  <!-- 未登录态下的功能预览 -->
   <view class="login-features-card" wx:if="{{!userInfo}}">
     <view class="login-features">
       <view class="feature-preview">
@@ -80,7 +84,7 @@
         <text class="feature-title">我的点赞</text>
       </view>
       <view class="feature-right">
-        <text class="feature-count">{{likesCount}}</text>
+        <text class="feature-count">{{userInfo.likes.length || 0}}</text>
         <text class="arrow">›</text>
       </view>
     </view>
@@ -91,7 +95,7 @@
         <text class="feature-title">我的收藏</text>
       </view>
       <view class="feature-right">
-        <text class="feature-count">{{collectCount}}</text>
+        <text class="feature-count">{{userInfo.collection.length || 0}}</text>
         <text class="arrow">›</text>
       </view>
     </view>
@@ -166,4 +170,4 @@
   </view>
 </view>
 
-<canvas type="2d" id="avatarCanvas" style="width: 400px; height: 400px; position: fixed; left: -500px;"></canvas> 
+<canvas type="2d" id="avatarCanvas" style="position: fixed; left: -9999px;"></canvas> 

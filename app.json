@@ -2,16 +2,18 @@
   "pages": [
     "pages/index/index",
     "pages/all/index",
-    "pages/my/index",
     "pages/detail/index",
+    "pages/my/index",
     "pages/my/likes/index",
     "pages/my/favorites/index"
   ],
   "window": {
-    "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#fff",
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#B4A5A5",
+    "navigationBarTextStyle": "white",
     "navigationBarTitleText": "浮图物相",
-    "navigationBarTextStyle": "black"
+    "backgroundColor": "#F5F1ED",
+    "enablePullDownRefresh": true
   },
   "tabBar": {
     "color": "#999999",

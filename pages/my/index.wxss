@@ -1,18 +1,22 @@
 .page {
   min-height: 100vh;
-  background: #f8f8f8;
+  background: #F5F1ED;
   position: relative;
+  padding-top: 0;
+  z-index: 1;
 }
 
 .header-bg {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   height: 240rpx;
   background: linear-gradient(135deg, #B4A5A5 0%, #D3C5C5 100%);
+  box-shadow: 0 4rpx 20rpx rgba(180, 165, 165, 0.3);
   border-bottom-left-radius: 40rpx;
   border-bottom-right-radius: 40rpx;
+  z-index: 1;
 }
 
 /* 波浪装饰 */
@@ -141,38 +145,55 @@
 .user-card {
   margin: 40rpx 32rpx 0;
   padding: 32rpx;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(243, 240, 237, 0.95));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 32rpx;
+  box-shadow: 
+    0 8rpx 32rpx rgba(180, 165, 165, 0.15),
+    0 2rpx 8rpx rgba(180, 165, 165, 0.1);
   position: relative;
   z-index: 2;
 }
 
 .user-info {
   display: flex;
-  align-items: center;
+  align-items: center; /* 确保头像和文字垂直方向居中对齐 */
   margin-bottom: 32rpx;
 }
 
 .avatar {
   width: 120rpx;
   height: 120rpx;
-  border-radius: 60rpx;
-  border: 4rpx solid #fff;
-  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
+  border-radius: 60rpx; /* 确保头像为圆形 */
+  border: 4rpx solid rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    0 4rpx 12rpx rgba(180, 165, 165, 0.2),
+    0 0 4rpx rgba(180, 165, 165, 0.1);
+  transition: transform 0.3s ease;
+  flex-shrink: 0; /* 防止图片被压缩 */
+}
+
+.avatar:active {
+  transform: scale(0.98); /* 点击时缩放效果 */
 }
 
 .info-content {
   margin-left: 24rpx;
-  flex: 1;
+  flex: 1; /* 文本区域宽度自适应 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 确保内容垂直方向居中 */
+  min-height: 120rpx; /* 与头像高度一致，防止对齐问题 */
 }
 
 .name {
   font-size: 36rpx;
   font-weight: 600;
-  color: #333;
+  color: #4A4A4A;
   margin-bottom: 8rpx;
+  text-shadow: 0 1px 2px rgba(180, 165, 165, 0.1);
+  line-height: 1.4; /* 保证文字行高 */
 }
 
 .join-time {
@@ -180,10 +201,12 @@
   color: #999;
 }
 
+
 .stats-bar {
   display: flex;
   padding: 24rpx 0;
-  border-top: 1rpx solid #f5f5f5;
+  border-top: 1px solid rgba(180, 165, 165, 0.15);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.8));
 }
 
 .stat-item {
@@ -194,22 +217,26 @@
 .stat-item .count {
   font-size: 36rpx;
   font-weight: 600;
-  color: #333;
+  color: #8B7355;
   margin-bottom: 4rpx;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
 }
 
 .stat-item .label {
   font-size: 24rpx;
-  color: #999;
+  color: #A69886;
 }
 
 .feature-list {
   margin: 32rpx;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 24rpx;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(246, 243, 240, 0.92));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 32rpx;
   padding: 0 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  box-shadow: 
+    0 8rpx 32rpx rgba(180, 165, 165, 0.12),
+    0 2rpx 8rpx rgba(180, 165, 165, 0.08);
   z-index: 2;
   position: relative;
 }
@@ -219,7 +246,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 32rpx 0;
-  border-bottom: 1rpx solid #f5f5f5;
+  border-bottom: 1px solid rgba(180, 165, 165, 0.12);
 }
 
 .feature-item:last-child {
@@ -239,7 +266,7 @@
 
 .feature-title {
   font-size: 28rpx;
-  color: #333;
+  color: #6B5B5B;
 }
 
 .feature-right {
@@ -249,7 +276,7 @@
 
 .feature-count {
   font-size: 28rpx;
-  color: #999;
+  color: #A69886;
   margin-right: 8rpx;
 }
 
@@ -262,9 +289,10 @@
   padding: 0;
   font-size: 32rpx;
   font-weight: normal;
-  color: #B4A5A5;
+  color: #8B7355;
   background: none;
   line-height: 1.5;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
 }
 
 .login-btn::after {
@@ -273,7 +301,7 @@
 
 .login-desc {
   font-size: 24rpx;
-  color: #999;
+  color: #A69886;
   margin-top: 8rpx;
 }
 
@@ -293,7 +321,10 @@
 
 .nickname-content {
   width: 560rpx;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 12rpx 48rpx rgba(0, 0, 0, 0.12);
   border-radius: 24rpx;
   padding: 40rpx;
   box-sizing: border-box;
@@ -321,7 +352,7 @@
 .confirm-btn {
   width: 100%;
   height: 88rpx;
-  background: #B4A5A5;
+  background: linear-gradient(135deg, #B4A5A5, #A69886);
   color: #fff;
   border-radius: 12rpx;
   font-size: 32rpx;
@@ -329,10 +360,12 @@
   align-items: center;
   justify-content: center;
   padding: 0;
+  border: none;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
 .confirm-btn[disabled] {
-  background: rgba(180, 165, 165, 0.6);
+  background: linear-gradient(135deg, #D3C5C5, #C5B8B8);
   color: #fff;
 }
 
@@ -343,10 +376,13 @@
   position: relative;
   z-index: 2;
   padding: 60rpx 40rpx;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(243, 240, 237, 0.92));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 32rpx;
+  box-shadow: 
+    0 8rpx 32rpx rgba(180, 165, 165, 0.12),
+    0 2rpx 8rpx rgba(180, 165, 165, 0.08);
   overflow: hidden;
 }
 
@@ -364,7 +400,7 @@
   position: absolute;
   width: 40rpx;
   height: 40rpx;
-  border-color: #B4A5A5;
+  border-color: rgba(180, 165, 165, 0.4);
   opacity: 0.6;
 }
 
@@ -401,7 +437,7 @@
   position: absolute;
   width: 120rpx;
   height: 200rpx;
-  background: radial-gradient(ellipse at center, rgba(180, 165, 165, 0.1) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(180, 165, 165, 0.15) 0%, transparent 70%);
   filter: blur(10rpx);
   animation: inkFloat 8s ease-in-out infinite;
 }
@@ -434,9 +470,10 @@
 
 .quote-title {
   font-size: 32rpx;
-  color: #B4A5A5;
+  color: #8B7355;
   margin: 0 24rpx;
   letter-spacing: 4rpx;
+  font-weight: 500;
 }
 
 .ink-line {
@@ -447,12 +484,13 @@
 
 .quote-text {
   font-size: 28rpx;
-  color: #666;
+  color: #6B5B5B;
   line-height: 1.8;
   letter-spacing: 2rpx;
   display: inline-block;
   margin: 16rpx 0;
   animation: fadeIn 1s ease-out;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
 }
 
 .quote-mark {
@@ -534,9 +572,11 @@
 }
 
 .bio {
-  font-size: 24rpx;
-  color: #999;
+  font-size: 26rpx;
+  color: #8B7E7E;
   padding: 4rpx 0;
+  line-height: 1.6;
+  margin-top: 4rpx;
 }
 
 /* 个人简介输入框样式 */
@@ -555,7 +595,10 @@
 
 .bio-content {
   width: 560rpx;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 12rpx 48rpx rgba(0, 0, 0, 0.12);
   border-radius: 24rpx;
   padding: 40rpx;
   box-sizing: border-box;
@@ -708,4 +751,42 @@
 .feature-preview .feature-text {
   font-size: 24rpx;
   color: #666;
+}
+
+/* 为卡片添加微妙的装饰效果 */
+.user-card::before,
+.feature-list::before,
+.daily-quote::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80rpx;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.15),
+    transparent
+  );
+  border-radius: 32rpx 32rpx 0 0;
+  pointer-events: none;
+}
+
+/* 为卡片添加细腻的光影效果 */
+.user-card::after,
+.feature-list::after,
+.daily-quote::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60rpx;
+  background: linear-gradient(
+    to top,
+    rgba(180, 165, 165, 0.05),
+    transparent
+  );
+  border-radius: 0 0 32rpx 32rpx;
+  pointer-events: none;
 } 

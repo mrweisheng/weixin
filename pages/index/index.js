@@ -23,10 +23,12 @@ Page({
   },
 
   loadHomeData() {
+    console.log('开始加载首页数据');
     this.setData({ loading: true });
+    
     wx.request({
-      url: 'https://jiekou.hkstudy.asia/api/home/data',
-      method: 'POST',
+      url: 'https://hight.fun/api/images/home-data',
+      method: 'GET',
       success: (res) => {
         console.log('首页数据返回:', res.data);
         
@@ -34,11 +36,8 @@ Page({
           // 为每个图片添加缩略图和高清图
           const processedList = res.data.data.allContentList.map(item => ({
             ...item,
-            // 添加一个超小的模糊缩略图
             thumbnail: item.main_url + '?x-oss-process=image/resize,w_50/quality,q_50/blur,r_3,s_2',
-            // 添加中等质量的预览图
             preview: item.main_url + '?x-oss-process=image/resize,w_400/quality,q_75',
-            // 原图
             main_url: item.main_url,
             loaded: false
           }));
@@ -48,16 +47,28 @@ Page({
             recommendList: res.data.data.recommendList,
             allContentList: processedList,
             loading: false
+          }, () => {
+            console.log('数据更新完成');
+            wx.stopPullDownRefresh();
+            console.log('停止下拉刷新');
           });
+        } else {
+          console.error('接口返回错误:', res.data.msg);
         }
+      },
+      fail: (err) => {
+        console.error('请求失败:', err);
+        this.setData({ loading: false });
+        wx.stopPullDownRefresh();
       }
     });
   },
 
   onImageTap(e) {
     const { info } = e.currentTarget.dataset;
+    console.log('点击图片，传递的信息:', info);
     wx.navigateTo({
-      url: `/pages/detail/index?id=${info._id}`
+      url: `/pages/detail/index?id=${info.id}`
     });
   },
 
@@ -79,8 +90,8 @@ Page({
     try {
       const res = await new Promise((resolve, reject) => {
         wx.request({
-          url: 'https://jiekou.hkstudy.asia/api/image/list',
-          method: 'POST',
+          url: 'https://hight.fun/api/images/all',
+          method: 'GET',
           data: {
             page: this.data.page,
             pageSize: this.data.pageSize
@@ -90,22 +101,23 @@ Page({
         });
       });
 
-      if (res.data.code === 0) {
-        // 处理图片列表中的URL
-        const imageList = res.data.data.list.map(item => ({
+      if (res.data.success) {
+        // 处理图片列表
+        const imageList = res.data.data.map(item => ({
           ...item,
-          url: item.url.startsWith('http') 
-            ? item.url 
-            : `https://jiekou.hkstudy.asia${item.url}`
+          _id: item.id,
+          main_url: item.cover_url,
+          url_list: item.urls,
+          create_date: new Date(item.uploaded_at).getTime()
         }));
         
         this.setData({
           imageList: [...this.data.imageList, ...imageList],
-          hasMore: res.data.data.hasMore,
+          hasMore: this.data.page < res.data.pagination.totalPages,
           loading: false
         });
       } else {
-        throw new Error(res.data.msg || '获取图片列表失败');
+        throw new Error('获取图片列表失败');
       }
     } catch (err) {
       console.error('获取图片列表失败:', err);
@@ -155,7 +167,8 @@ Page({
     // 根据滚动位置计算可见范围
     const query = wx.createSelectorQuery();
     query.selectAll('.grid-item').boundingClientRect((rects) => {
-      const windowHeight = wx.getSystemInfoSync().windowHeight;
+      const windowInfo = wx.getWindowInfo();
+      const windowHeight = windowInfo.windowHeight;
       let start = this.data.visibleRange.start;
       let end = this.data.visibleRange.end;
       
@@ -172,5 +185,20 @@ Page({
         });
       }
     }).exec();
+  },
+
+  onPullDownRefresh() {
+    console.log('触发下拉刷新');
+    try {
+      this.setData({
+        imageList: [],
+        loading: true
+      }, () => {
+        console.log('重置数据状态完成');
+        this.loadHomeData();
+      });
+    } catch (err) {
+      console.error('下拉刷新出错:', err);
+    }
   }
 });

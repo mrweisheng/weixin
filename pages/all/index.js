@@ -29,8 +29,8 @@ Page({
     this.setData({ loading: true });
 
     wx.request({
-      url: 'https://jiekou.hkstudy.asia/api/image/list',
-      method: 'POST',
+      url: 'https://hight.fun/api/images/all',
+      method: 'GET',
       data: {
         page: this.data.page,
         pageSize: this.data.pageSize
@@ -38,14 +38,19 @@ Page({
       success: (res) => {
         console.log('请求成功，返回数据:', res.data);
         
-        if (res.data.code === 0) {
-          const newList = res.data.data.list;
-          console.log('新增图片数量:', newList.length);
+        if (res.data.success) {
+          const newList = res.data.data.items.map(item => ({
+            ...item,
+            _id: item.id,
+            main_url: item.cover_url || item.main_url,
+            url_list: item.urls || item.url_list,
+            create_date: new Date(item.uploaded_at).getTime()
+          }));
           
           this.setData({
             imageList: [...this.data.imageList, ...newList],
             page: this.data.page + 1,
-            hasMore: res.data.data.hasMore,
+            hasMore: this.data.page < res.data.data.pagination.totalPages,
             firstLoad: false,
             loadFailed: false
           }, () => {

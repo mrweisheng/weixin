@@ -1,45 +1,64 @@
 Page({
   data: {
-    imageList: [],
-    loading: true
+    loading: true,
+    items: [],
+    error: null
   },
 
   onLoad() {
-    const userInfo = wx.getStorageSync('userInfo');
-    const token = wx.getStorageSync('token');
+    this.fetchLikesList();
+  },
 
-    if (!userInfo || !userInfo.likes || userInfo.likes.length === 0) {
-      this.setData({ loading: false });
-      return;
-    }
-
-    wx.request({
-      url: 'https://jiekou.hkstudy.asia/api/image/list-by-ids',
-      method: 'POST',
-      header: {
-        'Authorization': `Bearer ${token}`
-      },
-      data: {
-        image_ids: userInfo.likes
-      },
-      success: (res) => {
-        console.log('点赞列表返回:', res.data);
-        if (res.data.code === 0) {
-          this.setData({
-            imageList: res.data.data.list
-          });
-        }
-      },
-      complete: () => {
-        this.setData({ loading: false });
+  async fetchLikesList() {
+    try {
+      const token = wx.getStorageSync('token');
+      if (!token) {
+        throw new Error('未登录');
       }
+
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: 'https://hight.fun/api/user/likes',
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${token}`
+          },
+          success: resolve,
+          fail: reject
+        });
+      });
+
+      if (res.data.code === 0) {
+        this.setData({
+          items: res.data.data.items,
+          loading: false
+        });
+      } else {
+        throw new Error(res.data.msg || '获取点赞列表失败');
+      }
+    } catch (err) {
+      console.error('获取点赞列表失败:', err);
+      this.setData({
+        error: err.message || '获取点赞列表失败',
+        loading: false
+      });
+    }
+  },
+
+  // 点击图片跳转到详情
+  goToDetail(e) {
+    const { id } = e.currentTarget.dataset;
+    wx.navigateTo({
+      url: `/pages/detail/index?id=${id}`
     });
   },
 
-  onImageTap(e) {
-    const { info } = e.currentTarget.dataset;
-    wx.navigateTo({
-      url: `/pages/detail/index?id=${info._id}`
-    });
+  // 下拉刷新
+  async onPullDownRefresh() {
+    try {
+      await this.fetchLikesList();
+    } finally {
+      wx.stopPullDownRefresh();
+    }
   }
 }); 

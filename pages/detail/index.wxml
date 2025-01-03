@@ -33,4 +33,22 @@
       </view>
     </view>
   </view>
+
+  <!-- 底部操作栏 -->
+  <view class="footer-actions">
+    <view class="action-item" bindtap="handleLike">
+      <view class="action-status {{isLiked ? 'active' : ''}}">
+        <text class="action-count">{{likesCount}}</text>
+        <text class="action-tag" wx:if="{{isLiked}}">已点赞</text>
+      </view>
+      <image class="action-icon" src="/assets/images/likes.png" mode="aspectFit" />
+    </view>
+    <view class="action-item" bindtap="handleFavorite">
+      <view class="action-status {{isFavorited ? 'active' : ''}}">
+        <text class="action-count">{{collectCount}}</text>
+        <text class="action-tag" wx:if="{{isFavorited}}">已收藏</text>
+      </view>
+      <image class="action-icon" src="/assets/images/favorites.png" mode="aspectFit" />
+    </view>
+  </view>
 </view> 

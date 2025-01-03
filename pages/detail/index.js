@@ -13,15 +13,35 @@ Page({
     isFavorited: false
   },
 
+  // 检查登录状态
+  checkLogin() {
+    const token = wx.getStorageSync('token');
+    if (!token) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      });
+      return false;
+    }
+    return true;
+  },
+
   onLoad(options) {
+    console.log('详情页接收到的参数:', options);
     const { id } = options;
     const userInfo = wx.getStorageSync('userInfo');
     
+    if (!id) {
+      wx.showToast({
+        title: '参数错误',
+        icon: 'none'
+      });
+      return;
+    }
+    
     this.setData({ 
       imageId: id,
-      userInfo,
-      // 判断当前图片是否在用户的点赞列表中
-      isLiked: userInfo?.likes?.includes(id) || false
+      userInfo
     });
 
     this.getImageDetail(id);
@@ -29,27 +49,49 @@ Page({
 
   async getImageDetail(imageId) {
     try {
-      console.log('请求参数:', { image_id: imageId });
-      // 使用原始的 wx.request 而不是封装的 request
-      wx.request({
-        url: 'https://jiekou.hkstudy.asia/api/image/detail',
+      if (!imageId) {
+        throw new Error('图片ID不能为空');
+      }
+
+      // 获取 token，有则携带
+      const token = wx.getStorageSync('token');
+      const header = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+      console.log('开始请求图片详情，ID:', imageId);
+      console.log('请求参数:', {
+        url: 'https://hight.fun/api/images/detail',
         method: 'POST',
+        header,
+        data: { image_id: Number(imageId) }
+      });
+
+      wx.request({
+        url: 'https://hight.fun/api/images/detail',
+        method: 'POST',
+        header,
         data: {
-          image_id: imageId
+          image_id: Number(imageId)
         },
         success: (res) => {
+          console.log('接口返回:', res.data);
           if (res.data.code === 0) {
             const imageData = res.data.data;
-            if (imageData.url) {
-              imageData.url = imageData.url.startsWith('http') 
-                ? imageData.url 
-                : `https://jiekou.hkstudy.asia${imageData.url}`;
-            }
+            // 保持字段映射，确保兼容性
+            const processedData = {
+              ...imageData,
+              _id: imageData.id,
+              likes: imageData.like_count,
+              collection: imageData.favorite_count,
+              url_list: imageData.url_list,
+              main_url: imageData.main_url
+            };
             
             this.setData({
-              imageInfo: imageData,
-              likesCount: imageData.likes || 0,
-              collectCount: imageData.collection || 0
+              imageInfo: processedData,
+              likesCount: imageData.like_count,
+              collectCount: imageData.favorite_count,
+              isLiked: imageData.isLiked || false,      // 未登录时默认 false
+              isFavorited: imageData.isFavorited || false  // 未登录时默认 false
             });
           } else {
             wx.showToast({
@@ -72,7 +114,7 @@ Page({
     } catch (err) {
       console.error('请求失败:', err);
       wx.showToast({
-        title: '获取详情失败',
+        title: err.message || '获取详情失败',
         icon: 'none'
       });
       this.setData({ loading: false });
@@ -106,16 +148,7 @@ Page({
   // 点赞操作需要登录
   async handleLike() {
     try {
-      const userInfo = wx.getStorageSync('userInfo');
-      const token = wx.getStorageSync('token');
-
-      if (!userInfo || !token) {
-        wx.showToast({
-          title: '请先登录',
-          icon: 'none'
-        });
-        return;
-      }
+      if (!this.checkLogin()) return;
 
       // 显示加载中
       wx.showLoading({
@@ -123,67 +156,51 @@ Page({
         mask: true  // 防止用户重复点击
       });
 
-      wx.request({
-        url: 'https://jiekou.hkstudy.asia/api/interaction/like',
-        method: 'POST',
-        header: {
-          'Authorization': `Bearer ${token}`
-        },
-        data: {
-          image_id: this.data.imageInfo._id,
-          openid: userInfo.openid
-        },
-        success: (res) => {
-          if (res.data.code === 0) {
-            // 更新点赞状态和数量
-            this.setData({
-              isLiked: res.data.data.isLiked,
-              likesCount: res.data.data.likes
-            });
-
-            wx.showToast({
-              title: res.data.data.isLiked ? '点赞成功' : '已取消点赞',
-              icon: 'success'
-            });
-          } else {
-            wx.showToast({
-              title: res.data.msg || '操作失败',
-              icon: 'none'
-            });
-          }
-        },
-        fail: (err) => {
-          wx.showToast({
-            title: '操作失败，请重试',
-            icon: 'none'
-          });
-        },
-        complete: () => {
-          wx.hideLoading();  // 隐藏加载提示
-        }
+      const token = wx.getStorageSync('token');
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: 'https://hight.fun/api/interaction/like',
+          method: 'POST',
+          header: {
+            'Authorization': `Bearer ${token}`
+          },
+          data: {
+            image_id: this.data.imageId
+          },
+          success: resolve,
+          fail: reject
+        });
       });
+
+      if (res.data.code === 0) {
+        this.setData({
+          isLiked: res.data.data.isLiked,
+          likesCount: res.data.data.likes
+        });
+
+        // 显示操作结果
+        wx.showToast({
+          title: res.data.data.isLiked ? '点赞成功' : '已取消点赞',
+          icon: 'success'
+        });
+      } else {
+        throw new Error(res.data.msg || '操作失败');
+      }
     } catch (err) {
-      wx.hideLoading();
+      console.error('点赞失败:', err);
       wx.showToast({
-        title: '操作失败，请重试',
+        title: err.message || '操作失败',
         icon: 'none'
       });
+    } finally {
+      wx.hideLoading();  // 隐藏加载提示
     }
   },
 
   // 收藏操作需要登录
   async handleFavorite() {
     try {
-      const userInfo = wx.getStorageSync('userInfo');
-      const token = wx.getStorageSync('token');
-
-      if (!userInfo || !token) {
-        wx.showToast({
-          title: '请先登录',
-          icon: 'none'
-        });
-        return;
-      }
+      if (!this.checkLogin()) return;
 
       // 显示加载中
       wx.showLoading({
@@ -191,51 +208,44 @@ Page({
         mask: true  // 防止用户重复点击
       });
 
-      wx.request({
-        url: 'https://jiekou.hkstudy.asia/api/interaction/favorite',
-        method: 'POST',
-        header: {
-          'Authorization': `Bearer ${token}`
-        },
-        data: {
-          image_id: this.data.imageInfo._id,
-          openid: userInfo.openid
-        },
-        success: (res) => {
-          if (res.data.code === 0) {
-            // 更新收藏状态和数量
-            this.setData({
-              isFavorited: res.data.data.isFavorited,
-              collectCount: res.data.data.collection
-            });
-
-            wx.showToast({
-              title: res.data.data.isFavorited ? '收藏成功' : '已取消收藏',
-              icon: 'success'
-            });
-          } else {
-            wx.showToast({
-              title: res.data.msg || '操作失败',
-              icon: 'none'
-            });
-          }
-        },
-        fail: (err) => {
-          wx.showToast({
-            title: '操作失败，请重试',
-            icon: 'none'
-          });
-        },
-        complete: () => {
-          wx.hideLoading();  // 隐藏加载提示
-        }
+      const token = wx.getStorageSync('token');
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: 'https://hight.fun/api/interaction/favorite',
+          method: 'POST',
+          header: {
+            'Authorization': `Bearer ${token}`
+          },
+          data: {
+            image_id: this.data.imageId
+          },
+          success: resolve,
+          fail: reject
+        });
       });
+
+      if (res.data.code === 0) {
+        this.setData({
+          isFavorited: res.data.data.isFavorited,
+          collectCount: res.data.data.collection
+        });
+
+        // 显示操作结果
+        wx.showToast({
+          title: res.data.data.isFavorited ? '收藏成功' : '已取消收藏',
+          icon: 'success'
+        });
+      } else {
+        throw new Error(res.data.msg || '操作失败');
+      }
     } catch (err) {
-      wx.hideLoading();
+      console.error('收藏失败:', err);
       wx.showToast({
-        title: '操作失败，请重试',
+        title: err.message || '操作失败',
         icon: 'none'
       });
+    } finally {
+      wx.hideLoading();  // 隐藏加载提示
     }
   },
 

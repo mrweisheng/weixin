@@ -1,0 +1,157 @@
+我的页面(pages/my)相关 API 需求：
+
+-1. 微信登录
+POST /auth/wx-login
+请求参数：
+{
+    "code": "wx.login获取的code",
+    "encryptedData": "wx.getUserProfile获取的加密数据",  // 可选
+    "iv": "wx.getUserProfile获取的iv"  // 可选
+}
+响应格式：
+{
+    "code": 0,
+    "msg": "success",
+    "data": {
+        "token": "eyJhbGc...",  // JWT token
+        "expires_in": 7200,      // token有效期（秒）
+        "userInfo": {           // 用户基本信息
+            "id": 1,
+            "openid": "wx_openid",
+            "nickname": null,
+            "avatar": null,
+            "bio": null
+        }
+    }
+}
+说明：
+1. 先调用 wx.login 获取 code
+2. 再调用 wx.getUserProfile 获取用户信息（可选）
+3. 将获取到的信息发送到服务端
+4. 服务端返回 token 和用户信息
+5. token 需要保存并在后续请求中携带
+
+0. 检查用户状态
+GET /user/check
+请求头：
+- Authorization: Bearer <token>
+说明：
+- 用于检查用户是否为新用户
+- 如果是新用户需要完善信息
+响应格式：
+{
+    "code": 0,
+    "msg": "success",
+    "data": {
+        "isNewUser": true,      // 是否新用户
+        "needUpdate": true,      // 是否需要更新信息
+        "userInfo": {           // 当前用户信息，新用户可能为 null
+            "id": 1,
+            "nickname": null,
+            "avatar": null,
+            "bio": null,
+            "likes": [],
+            "collection": []
+        }
+    }
+}
+
+1. 获取用户信息
+GET /user/info
+请求头：
+- Authorization: Bearer <token>
+响应格式：
+{
+    "code": 0,
+    "msg": "success",
+    "data": {
+        "id": 1,
+        "nickname": "用户昵称",
+        "avatar": "头像URL",
+        "bio": "个人简介",
+        "likes": ["1", "2"],     // 点赞过的图片ID数组
+        "collection": ["3", "4"]  // 收藏过的图片ID数组
+    }
+}
+
+2. 更新用户信息
+POST /user/update
+请求头：
+- Authorization: Bearer <token>
+请求参数：
+{
+    "nickname": "新昵称",    // 可选
+    "avatar": "base64格式的图片数据",  // 可选
+    "bio": "新的个人简介"    // 可选
+}
+响应格式：
+{
+    "code": 0,
+    "msg": "success",
+    "data": {
+        "id": 1,
+        "nickname": "更新后的昵称",
+        "avatar": "更新后的头像URL",
+        "bio": "更新后的简介",
+        "likes": ["1", "2"],
+        "collection": ["3", "4"]
+    }
+}
+
+3. 获取用户点赞列表
+GET /user/likes
+请求头：
+- Authorization: Bearer <token>
+响应格式：
+{
+    "code": 0,
+    "msg": "success",
+    "data": {
+        "list": [
+            {
+                "id": 1,
+                "category_id": 6,
+                "category_name": "街拍",
+                "url_list": ["图片URL1", "图片URL2"],
+                "main_url": "主图URL",
+                "image_count": 5,
+                "create_date": 1703123456789,
+                "likes": 10,
+                "collection": 5
+            }
+            // ... 更多图片
+        ]
+    }
+}
+
+4. 获取用户收藏列表
+GET /user/favorites
+请求头：
+- Authorization: Bearer <token>
+响应格式：
+{
+    "code": 0,
+    "msg": "success",
+    "data": {
+        "list": [
+            {
+                "id": 1,
+                "category_id": 6,
+                "category_name": "街拍",
+                "url_list": ["图片URL1", "图片URL2"],
+                "main_url": "主图URL",
+                "image_count": 5,
+                "create_date": 1703123456789,
+                "likes": 10,
+                "collection": 5
+            }
+            // ... 更多图片
+        ]
+    }
+}
+
+注意事项：
+1. 所有需要登录的接口都需要在请求头中携带 token
+2. 更新用户信息时，三个字段都是可选的，可以单独更新任意字段
+3. 头像上传时需要将图片转为 base64 格式
+4. 点赞和收藏列表返回的是完整的图片信息 

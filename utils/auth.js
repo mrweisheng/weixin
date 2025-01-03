@@ -1,115 +1,190 @@
-// 登录状态管理
-const TOKEN_KEY = 'token';
-const USER_INFO_KEY = 'userInfo';
-const TOKEN_EXPIRED_KEY = 'tokenExpired';
+// 登录状态监听器
+let loginStateListeners = [];
 
-class Auth {
-  static loginCallbacks = [];
-
-  // 添加登录状态监听
-  static onLoginStateChange(callback) {
-    this.loginCallbacks.push(callback);
-  }
-
-  // 移除登录状态监听
-  static offLoginStateChange(callback) {
-    this.loginCallbacks = this.loginCallbacks.filter(cb => cb !== callback);
-  }
-
-  // 通知登录状态变化
-  static notifyLoginStateChange(isLoggedIn) {
-    this.loginCallbacks.forEach(callback => {
-      try {
-        callback(isLoggedIn);
-      } catch (err) {
-        console.error('执行登录状态回调失败:', err);
+// 检查用户状态
+async function checkUserStatus(code) {
+  try {
+    const res = await wx.request({
+      url: 'https://hight.fun/api/user/check-status',
+      method: 'POST',
+      data: {
+        code: code
       }
     });
-  }
 
-  // 检查登录状态
-  static async checkLoginStatus() {
-    const token = wx.getStorageSync(TOKEN_KEY);
-    const tokenExpired = wx.getStorageSync(TOKEN_EXPIRED_KEY);
-    
-    if (!token) return false;
-    
-    // 检查token是否过期
-    if (tokenExpired && new Date().getTime() > tokenExpired) {
-      try {
-        await this.refreshToken();
-        return true;
-      } catch (err) {
-        this.clearLoginInfo();
-        return false;
+    if (res.data.code === 0) {
+      const { isNewUser, userInfo, token, tokenExpired } = res.data.data;
+      
+      // 如果是老用户，保存信息
+      if (!isNewUser && userInfo && token) {
+        wx.setStorageSync('token', token);
+        wx.setStorageSync('tokenExpired', tokenExpired);
+        wx.setStorageSync('userInfo', userInfo);
       }
+      
+      return {
+        isNewUser,
+        userInfo,
+        token
+      };
     }
-    
-    return true;
-  }
-
-  // 刷新token
-  static async refreshToken() {
-    try {
-      const oldToken = wx.getStorageSync(TOKEN_KEY);
-      const res = await wx.request({
-        url: 'https://jiekou.hkstudy.asia/api/auth/refresh-token',
-        method: 'POST',
-        header: {
-          'Authorization': `Bearer ${oldToken}`
-        }
-      });
-
-      if (res.data.code === 0) {
-        const { token, tokenExpired } = res.data.data;
-        wx.setStorageSync(TOKEN_KEY, token);
-        wx.setStorageSync(TOKEN_EXPIRED_KEY, tokenExpired);
-        return true;
-      }
-      throw new Error(res.data.msg || '刷新token失败');
-    } catch (err) {
-      this.clearLoginInfo();
-      throw err;
-    }
-  }
-
-  // 统一的错误处理
-  static handleApiError(err, options = {}) {
-    const { showError = true, retry = false } = options;
-    
-    if (err.code === 401) {
-      return this.refreshToken();
-    }
-    
-    if (showError) {
-      wx.showToast({
-        title: err.message || '操作失败，请重试',
-        icon: 'none',
-        duration: 2000
-      });
-    }
-    
-    return Promise.reject(err);
-  }
-
-  // 清除登录信息
-  static clearLoginInfo() {
-    wx.removeStorageSync(TOKEN_KEY);
-    wx.removeStorageSync(USER_INFO_KEY);
-    wx.removeStorageSync(TOKEN_EXPIRED_KEY);
-    this.notifyLoginStateChange(false);
-  }
-
-  // 保存用户信息
-  static saveUserInfo(userInfo) {
-    wx.setStorageSync(USER_INFO_KEY, userInfo);
-    this.notifyLoginStateChange(true);
-  }
-
-  // 获取用户信息
-  static getUserInfo() {
-    return wx.getStorageSync(USER_INFO_KEY);
+    throw new Error(res.data.msg || '检查用户状态失败');
+  } catch (err) {
+    console.error('检查用户状态失败:', err);
+    throw err;
   }
 }
 
-export default Auth; 
+// 微信登录
+async function wxLogin(userInfo, avatarFile) {
+  try {
+    // 1. 获取登录code
+    const loginRes = await wx.login();
+    if (!loginRes.code) {
+      throw new Error('获取登录凭证失败');
+    }
+
+    // 2. 如果有头像文件，先上传头像
+    let avatarUrl = userInfo.avatarUrl;
+    if (avatarFile) {
+      const uploadRes = await wx.uploadFile({
+        url: 'https://hight.fun/api/upload',
+        filePath: avatarFile.url,
+        name: 'avatar',
+        formData: {
+          'user': 'test'
+        }
+      });
+      if (uploadRes.statusCode === 200) {
+        const data = JSON.parse(uploadRes.data);
+        avatarUrl = data.url;
+      }
+    }
+
+    // 3. 发起登录请求
+    const res = await wx.request({
+      url: 'https://hight.fun/api/user/wx-login',
+      method: 'POST',
+      header: {
+        'content-type': 'application/json'
+      },
+      data: {
+        code: loginRes.code,
+        userInfo: {
+          nickName: userInfo.nickName,
+          gender: userInfo.gender,
+          avatarUrl: avatarUrl
+        }
+      }
+    });
+
+    if (res.data.code === 0) {
+      const { token, tokenExpired, userInfo: newUserInfo } = res.data.data;
+      
+      // 保存登录信息
+      wx.setStorageSync('token', token);
+      wx.setStorageSync('tokenExpired', tokenExpired);
+      wx.setStorageSync('userInfo', newUserInfo);
+
+      // 通知登录状态变化
+      notifyLoginStateChange(true);
+      
+      return newUserInfo;
+    }
+    throw new Error(res.data.msg || '登录失败');
+  } catch (err) {
+    console.error('微信登录失败:', err);
+    throw err;
+  }
+}
+
+// 检查登录状态
+async function checkLoginStatus() {
+  const token = wx.getStorageSync('token');
+  const tokenExpired = wx.getStorageSync('tokenExpired');
+  
+  if (!token || !tokenExpired) {
+    return false;
+  }
+
+  // 检查token是否过期
+  if (Date.now() >= tokenExpired) {
+    wx.removeStorageSync('token');
+    wx.removeStorageSync('tokenExpired');
+    wx.removeStorageSync('userInfo');
+    return false;
+  }
+
+  return true;
+}
+
+// 登录状态变化通知
+function notifyLoginStateChange(isLoggedIn) {
+  loginStateListeners.forEach(listener => listener(isLoggedIn));
+}
+
+// 添加登录状态监听
+function onLoginStateChange(listener) {
+  loginStateListeners.push(listener);
+}
+
+// 移除登录状态监听
+function offLoginStateChange(listener) {
+  const index = loginStateListeners.indexOf(listener);
+  if (index > -1) {
+    loginStateListeners.splice(index, 1);
+  }
+}
+
+// 清除登录信息
+function clearLoginInfo() {
+  wx.removeStorageSync('token');
+  wx.removeStorageSync('tokenExpired');
+  wx.removeStorageSync('userInfo');
+  notifyLoginStateChange(false);
+}
+
+// 获取用户信息
+function getUserInfo() {
+  return wx.getStorageSync('userInfo');
+}
+
+// 保存用户信息
+function saveUserInfo(userInfo) {
+  wx.setStorageSync('userInfo', userInfo);
+  notifyLoginStateChange(true);
+}
+
+// 处理API错误
+function handleApiError(err) {
+  console.error('API错误:', err);
+  
+  // 如果是token过期或无效
+  if (err.code === 401) {
+    clearLoginInfo();
+    wx.showToast({
+      title: '登录已过期，请重新登录',
+      icon: 'none'
+    });
+    return false;
+  }
+
+  // 其他错误
+  wx.showToast({
+    title: err.message || '操作失败',
+    icon: 'none'
+  });
+  return false;
+}
+
+export default {
+  checkUserStatus,
+  wxLogin,
+  checkLoginStatus,
+  onLoginStateChange,
+  offLoginStateChange,
+  clearLoginInfo,
+  getUserInfo,
+  saveUserInfo,
+  handleApiError
+}; 
